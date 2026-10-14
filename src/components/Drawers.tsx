@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUp, XIcon } from "lucide-react";
+import { ArrowRight, ArrowUp, Plus, XIcon } from "lucide-react";
+import type { OptionalCardId } from "@/components/AddCard";
 import { RicoAvatar, RicoLive } from "@/components/Rico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,24 +28,37 @@ export function SideDrawer({
 
 export const RICO_CHIPS = ["Why did MRR go up?", "Is this number right?", "What should I look at today?"];
 
-type Message = { from: "me" | "rico"; text: string; chart?: { label: string; metric: string } };
+type Message = {
+  from: "me" | "rico";
+  text: string;
+  chart?: { label: string; metric: string };
+  /** A card Rico offers to put back on the page, through the same logic as (+). */
+  addCard?: { label: string; id: OptionalCardId };
+};
 
 function reply(q: string): Message {
   const t = q.toLowerCase();
+  if (t.includes("new customers") || t.includes("active customers"))
+    return { from: "rico", text: "Those cards moved off the defaults. New customers, last 28 full days: 1,148, up 0.3%. Add it back?", addCard: { label: "Add card", id: "new_customers" } };
   if (t.includes("mrr"))
     return { from: "rico", text: "MRR is $5,120, up 6.1% vs the previous 28 days. 31 new annual subscriptions drove most of it. Open the MRR chart?", chart: { label: "Open MRR chart", metric: "MRR" } };
   if (t.includes("trial"))
     return { from: "rico", text: "Trial-to-paid conversion fell from 38% to 31% this period. Most of the drop is on Android. Want the conversion chart?", chart: { label: "Open conversion chart", metric: "Trial conversion" } };
   if (["right", "correct", "trust"].some((w) => t.includes(w)))
     return { from: "rico", text: "All numbers on this page use Charts v3 definitions and the same cutoff, 14 Oct 19:42 UTC. Customer cards are cached, as of 18:00 UTC." };
-  return { from: "rico", text: "I can answer questions about the six numbers on this page and what changed. Try: why did MRR go up?" };
+  return { from: "rico", text: "I can answer questions about the numbers on this page, what changed, and your business. Try: why did MRR go up?" };
 }
 
 export function RicoDrawer({
-  open, onOpenChange, draft, onDraftChange, onOpenChart,
-}: { open: boolean; onOpenChange: (o: boolean) => void; draft: string; onDraftChange: (v: string) => void; onOpenChart: (metric: string) => void }) {
+  open, onOpenChange, draft, onDraftChange, onOpenChart, onAddCard, ask,
+}: {
+  open: boolean; onOpenChange: (o: boolean) => void; draft: string; onDraftChange: (v: string) => void;
+  onOpenChart: (metric: string) => void; onAddCard: (id: OptionalCardId) => void;
+  /** A question sent from elsewhere on the page ("Ask Rico why"); `n` changes on every ask. */
+  ask?: { text: string; n: number } | null;
+}) {
   const [messages, setMessages] = useState<Message[]>([
-    { from: "rico", text: "Hi, I'm Rico. Ask me about the six numbers on this page and what changed." },
+    { from: "rico", text: "Hi, I'm Rico. Ask me about the numbers on this page, what changed, or your business." },
   ]);
   const [typing, setTyping] = useState(false);
   const chips = RICO_CHIPS.filter((c) => !messages.some((m) => m.from === "me" && m.text === c));
@@ -64,6 +78,11 @@ export function RicoDrawer({
     timers.current.push(window.setTimeout(() => { setMessages((m) => [...m, reply(q)]); setTyping(false); }, 600));
   };
 
+  useEffect(() => {
+    if (ask) send(ask.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ask?.n]);
+
   // iMessage: Rico's avatar sits by the last bubble of each of its runs; that bubble gets a tail.
   const lastOfRun = (i: number) => messages[i + 1]?.from !== messages[i].from && !(typing && i === messages.length - 1 && messages[i].from === "rico");
 
@@ -81,7 +100,7 @@ export function RicoDrawer({
         <div className="flex flex-col items-center border-b border-neutral-100 pt-3 pb-2 text-center">
           <RicoLive size={76} thinking={typing} />
           <SheetTitle className="-mt-2 text-xs font-medium text-neutral-900">Rico</SheetTitle>
-          <SheetDescription className="text-[11px] text-neutral-400">{typing ? "Thinking…" : "Answers about this page"}</SheetDescription>
+          <SheetDescription className="text-[11px] text-neutral-400">{typing ? "Thinking…" : "Answers about your business"}</SheetDescription>
         </div>
 
         <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pt-2 pb-3" aria-live="polite">
@@ -93,6 +112,11 @@ export function RicoDrawer({
                 {!me && (tail ? <RicoAvatar size={28} className="shrink-0" /> : <span className="w-7 shrink-0" />)}
                 <Bubble me={me} tail={tail}>
                   {m.text}
+                  {m.addCard && (
+                    <button onClick={() => onAddCard(m.addCard!.id)} className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-left text-[13px] font-medium text-[#0a84ff] hover:bg-neutral-50">
+                      {m.addCard.label} <Plus className="size-3.5" />
+                    </button>
+                  )}
                   {m.chart && (
                     <button onClick={() => onOpenChart(m.chart!.metric)} className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-left text-[13px] font-medium text-[#0a84ff] hover:bg-neutral-50">
                       {m.chart.label} <ArrowRight className="size-3.5" />
@@ -131,7 +155,7 @@ export function RicoDrawer({
               ref={inputRef}
               value={draft}
               onChange={(e) => onDraftChange(e.target.value)}
-              placeholder="iMessage Rico"
+              placeholder="Ask Rico about your business"
               aria-label="Message Rico"
               className="h-7 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-400"
             />

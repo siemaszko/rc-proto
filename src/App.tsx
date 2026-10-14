@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { FlaskConical, Info } from "lucide-react";
 import normalData from "@/data/normal.json";
 import lowVolumeData from "@/data/low_volume.json";
@@ -11,11 +12,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sidebar, TopBar } from "@/components/Shell";
 import { MetricCard, PlainCard } from "@/components/MetricCard";
-import { DesignRules, RecentTransactions, RicoBar, SectionTitle, SetupChecklist, WhatChanged } from "@/components/Sections";
+import { DesignRules, RecentTransactions, RicoBar, SetupChecklist, WhatChanged } from "@/components/Sections";
+import { AddCard, MAX_EXTRA, OPTIONAL_CARDS, type OptionalCardId } from "@/components/AddCard";
 import { RicoDrawer, SetupDrawer } from "@/components/Drawers";
 import { RicoLauncher } from "@/components/Rico";
-import { ChartModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
-import { dateTimeUtc, periodLabel } from "@/lib/format";
+import { ChartModal, ExperimentModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
+import { dateTimeUtc, formatValue, fullDaysLabel, periodLabel } from "@/lib/format";
 import type { CardData, ChartTarget, Overview, Preset, StateKey, View } from "@/types";
 
 const DATA: Record<StateKey, Overview> = {
@@ -38,6 +40,9 @@ export default function App() {
   const [rowsOpen, setRowsOpen] = useState(false);
   const [notOnPageOpen, setNotOnPageOpen] = useState(false);
   const [explainerOpen, setExplainerOpen] = useState(false);
+  const [experimentOpen, setExperimentOpen] = useState(false);
+  const [extra, setExtra] = useState<OptionalCardId[]>([]);
+  const [ricoAsk, setRicoAsk] = useState<{ text: string; n: number } | null>(null);
   const [ricoOpen, setRicoOpen] = useState(false);
   const [ricoDraft, setRicoDraft] = useState("");
   const [showSample, setShowSample] = useState(false);
@@ -54,18 +59,43 @@ export default function App() {
   const ctx = chart && { metric: chart.metric, periodLabel: periodLabel(preset), start: range.start, end: range.end, asOf: data.as_of };
 
   const empty = sample && !showSample;
+  const allCards = [...data.cards, ...Object.values(data.optional_cards)];
   const openMetric = (metric: string) => {
-    const card = data.cards.find((c) => c.label === metric);
+    const card = allCards.find((c) => c.label === metric);
     setChart({ metric, definition: card?.definition });
     setChartOpen(true);
   };
   const openChart = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setChartOpen(true); };
   const openRows = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setRowsOpen(true); };
 
-  const cardsFor = (row: "now" | "period") =>
-    data.cards.filter((c) => c.row === row).map((c) => (
-      <MetricCard key={c.id} card={c} preset={preset} asOf={data.as_of} gated={gated} sample={sample} empty={empty} onOpenChart={() => openChart(c)} onOpenRows={() => openRows(c)} />
-    ));
+  // (+) and Rico's "Add card" share this: no duplicates, at most MAX_EXTRA.
+  const addCard = (id: OptionalCardId) => {
+    const label = OPTIONAL_CARDS.find((c) => c.id === id)!.label;
+    if (extra.includes(id)) return toast(`${label} is already on the page`);
+    if (extra.length >= MAX_EXTRA) return toast(`Up to ${MAX_EXTRA} extra cards`);
+    setExtra([...extra, id]);
+  };
+  const askRico = (text: string) => {
+    setRicoAsk((a) => ({ text, n: (a?.n ?? 0) + 1 }));
+    setRicoOpen(true);
+  };
+
+  const cardFor = (c: CardData, onRemove?: () => void) => (
+    <MetricCard
+      key={c.id}
+      card={c}
+      preset={preset}
+      window={c.row === "now" ? c.window : fullDaysLabel(preset, range.end)}
+      notes={c.id === "active_subscriptions" ? [
+        `Incl. cancelled, not yet expired: ${formatValue(data.active_subs_incl, "count")}`,
+        `Excl.: ${formatValue(data.active_subs_excl, "count")}`,
+      ] : undefined}
+      onRemove={onRemove}
+      asOf={data.as_of} gated={gated} sample={sample} empty={empty}
+      onOpenChart={() => openChart(c)} onOpenRows={() => openRows(c)}
+    />
+  );
+  const optional = data.optional_cards as Record<OptionalCardId, CardData>;
 
   return (
     <TooltipProvider>
@@ -91,13 +121,41 @@ export default function App() {
                   </SelectContent>
                 </Select>
               </div>
+              {view === "proposed" && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  {sample && (
+                    <label className="flex items-center gap-2 text-xs text-neutral-600">
+                      <Switch checked={showSample} onCheckedChange={setShowSample} />
+                      Show sample data
+                    </label>
+                  )}
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+                    Data as of {dateTimeUtc(data.as_of)}
+                    <Popover>
+                      <PopoverTrigger aria-label="About the data cutoff" className="rounded p-0.5 text-neutral-400 hover:text-neutral-700">
+                        <Info className="size-3.5" />
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-64 p-3 text-xs text-neutral-700">
+                        All cards on this page use this cutoff. Cached cards show their own time.
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  {/* Drives Revenue and every delta. */}
+                  <Select items={PRESETS} value={preset} onValueChange={(v) => setPreset(v as Preset)}>
+                    <SelectTrigger size="sm" className="w-[140px] bg-white" aria-label="Period"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(PRESETS).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </header>
 
             {view === "today" ? (
               <>
                 <RicoBar placeholder="Ask about insights or growth opportunities for your apps" />
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                  {TODAY_ORDER.map((id) => data.cards.find((c) => c.id === id)!).map((c) => (
+                  {TODAY_ORDER.map((id) => allCards.find((c) => c.id === id)!).map((c) => (
                     <PlainCard key={c.id} card={c} onOpenChart={() => openChart(c)} />
                   ))}
                 </div>
@@ -107,51 +165,26 @@ export default function App() {
               <>
                 {data.setup && <SetupChecklist steps={setupSteps} onOpenStep={(i) => { setSetupIndex(i); setSetupOpen(true); }} />}
 
-                <section className="flex flex-col gap-3">
-                  <div className="flex min-h-8 items-center justify-between gap-3">
-                    <SectionTitle>Now</SectionTitle>
-                    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
-                      {sample && (
-                        <label className="flex items-center gap-2 text-xs text-neutral-600">
-                          <Switch checked={showSample} onCheckedChange={setShowSample} />
-                          Show sample data
-                        </label>
-                      )}
-                      <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-                        Data as of {dateTimeUtc(data.as_of)}
-                        <Popover>
-                          <PopoverTrigger aria-label="About the data cutoff" className="rounded p-0.5 text-neutral-400 hover:text-neutral-700">
-                            <Info className="size-3.5" />
-                          </PopoverTrigger>
-                          <PopoverContent align="end" className="w-64 p-3 text-xs text-neutral-700">
-                            All cards on this page use this cutoff. Cached cards show their own time.
-                          </PopoverContent>
-                        </Popover>
-                      </div>
+                {/* Four default cards in one row, extras from (+) after them; (+) at the row's end. */}
+                <section aria-label="Key numbers" className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                      {data.cards.map((c) => cardFor(c))}
+                      {extra.map((id) => cardFor(optional[id], () => setExtra(extra.filter((x) => x !== id))))}
                     </div>
+                    <AddCard variant="circle" added={extra} onAdd={addCard} className="hidden shrink-0 md:block" />
                   </div>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">{cardsFor("now")}</div>
-                </section>
-
-                <section className="flex flex-col gap-3">
-                  <div className="flex h-8 items-center justify-between gap-3">
-                    <SectionTitle>{periodLabel(preset)}</SectionTitle>
-                    <Select items={PRESETS} value={preset} onValueChange={(v) => setPreset(v as Preset)}>
-                      <SelectTrigger size="sm" className="w-[140px] bg-white" aria-label="Period"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(PRESETS).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">{cardsFor("period")}</div>
+                  <AddCard variant="row" added={extra} onAdd={addCard} className="md:hidden" />
                 </section>
 
                 <WhatChanged
                   data={data}
-                  onOpen={(item) => {
-                    if (!item.link.metric) return setExplainerOpen(true);
+                  onAction={(item) => {
+                    if (item.link.action === "experiment") return setExperimentOpen(true);
+                    if (item.link.action === "explainer" || !item.link.metric) return setExplainerOpen(true);
                     openMetric(item.link.metric);
                   }}
+                  onAskRico={(item) => askRico(item.text)}
                 />
 
                 <RecentTransactions rows={data.recent_transactions} collapsible />
@@ -188,12 +221,15 @@ export default function App() {
       <RowsModal ctx={ctx} open={rowsOpen} onOpenChange={setRowsOpen} />
       <NotOnPageModal open={notOnPageOpen} onOpenChange={setNotOnPageOpen} />
       <ExplainerModal open={explainerOpen} onOpenChange={setExplainerOpen} />
+      <ExperimentModal open={experimentOpen} onOpenChange={setExperimentOpen} />
       <RicoDrawer
         open={ricoOpen}
         onOpenChange={setRicoOpen}
         draft={ricoDraft}
         onDraftChange={setRicoDraft}
         onOpenChart={(metric) => { setRicoOpen(false); openMetric(metric); }}
+        onAddCard={(id) => { setRicoOpen(false); addCard(id); }}
+        ask={ricoAsk}
       />
       <SetupDrawer
         step={setupSteps[setupIndex]}

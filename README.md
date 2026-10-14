@@ -13,7 +13,7 @@ npm install
 npm run dev                 # http://localhost:5173
 npm run build               # static build into dist/ (what Netlify serves)
 node scripts/gen-data.mjs   # regenerate the mock JSON (fixed seeds, deterministic)
-npm run screenshots         # screenshots 01-09 into screenshots/, plus click-through checks (needs dev server + Chrome)
+npm run screenshots         # screenshots 01-11 into screenshots/, plus click-through checks (needs dev server + Chrome)
 ```
 
 Push to `main` deploys to Netlify.
@@ -22,11 +22,15 @@ Push to `main` deploys to Netlify.
 
 - **Prototype dock** (dark, floating at the bottom): Today / Proposed tabs and the State
   select (Normal, Below volume gate, New project). State only swaps the JSON file.
-- **Proposed**: header with app selector; **Now** row with the one "Data as of" cutoff on the right of its title
-  (Active subscriptions, Active trials, MRR); **period** row (Revenue, New customers,
-  Active customers) with the 7d / 28d / 90d picker; **What changed** strip (max 3, tagged
-  Business or Definition / data); Recent transactions (collapsed); footer with the 3 design
-  rules and "Not on this page, and why".
+- **Proposed** (round 6 layout): header with app selector, the one "Data as of" cutoff and
+  the 7d / 28d / 90d picker (it drives Revenue and every delta). One row of four cards:
+  MRR, Active subscriptions, Active trials, Revenue (4 columns, 2x2 on a tablet, 1 on a
+  phone), each carrying its own window ("In total, now" / "Last 28 full days · through
+  13 Oct"). **(+)** at the row's end (a dashed "Add a card" row on a phone) adds up to two of
+  New customers, Active customers, Trial conversion, Churn, Realized LTV, each removable,
+  in memory only. **What changed** as two tiles (tag, sentence, "Ask Rico why" and the
+  action), the rest behind "1 more"; below the volume gate one muted tile. Recent
+  transactions (collapsed); footer with the 3 design rules and "Not on this page, and why".
 - **Rico mascot** (round 5): an indigo blob whose eyes are holes in the body, drawn with the
   [bloub](https://github.com/jeremy-prt/bloub) engine (MIT, vendored in `src/vendor/bloub`,
   ported from its Vue component to `BloubRico.tsx`). It floats in the bottom-right corner
@@ -38,17 +42,21 @@ Push to `main` deploys to Netlify.
   phone), with the live Rico in its header (it turns into bloub's "thinking" dots while
   replying), iMessage-style bubbles with Rico's face beside its own, the 3 suggested prompts
   stacked above the input (a sent one disappears), a typing
-  bubble, and a mocked chat: replies after 600ms, keyed on "mrr", "trial",
-  "right/correct/trust", else a default. MRR and trial replies have a button to the chart modal.
+  bubble, and a mocked chat: replies after 600ms, keyed on "new/active customers" (offers
+  "Add card", same logic as (+)), "mrr", "trial", "right/correct/trust", else a default. MRR
+  and trial replies have a button to the chart modal. "Ask Rico why" on a What changed tile
+  opens the chat with the tile's sentence as your message.
 - **New project** (round 2): the setup card lists 6 tasks (2 of 6 done); each opens the same
   drawer with numbered steps, a code snippet for the SDK step, "Open <flow>" (toast stub) and
   a "Mark done" checkbox that updates the card. Cards are empty ("—", "No data yet") until
   the "Show sample data" switch next to Now is on; then they fill with watermarked sample
   values and the sparklines draw in (600ms, ease-out).
-- **Card**: label, (i) definition popover, big number, delta vs previous period,
+- **Card**: label, (i) definition popover (Active subscriptions adds incl./excl. cancelled
+  counts), big number, delta vs previous period (Churn going up is red),
   28-point sparkline in the delta color, window and freshness line, Open chart / View rows.
   Clicking anywhere on the card opens the chart.
-- **Today**: the "before": Rico bar, 6 plain cards, recent transactions table.
+- **Today**: the "before": Rico bar, 6 plain cards, recent transactions table (unchanged;
+  New and Active customers come from `optional_cards` there).
 
 Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primitives
 (`base-nova` style), lucide-react, inline SVG sparklines. Mock data in `src/data/*.json`.
@@ -58,8 +66,11 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - Chart modal and rows modal (they show metric, period, and the carried-over "as of"
   cutoff, no real chart or rows). "Full definition", "Read the explainer" (small stub
   modal) and sidebar nav do nothing.
-- Rico answers are 4 canned replies with hardcoded Normal-state numbers, in every state.
+- Rico answers are 5 canned replies with hardcoded Normal-state numbers, in every state.
   Setup "Open <flow>" buttons only show a toast; done state resets on reload.
+- "Test a new paywall" opens a stub ("Would open Experiments with this segment
+  pre-selected"). Extra cards from (+) reset on reload. Trial conversion, Churn and Realized
+  LTV are mock values (31%, 4.2%, $38 in Normal).
 - "All apps" in the app selector is disabled with a "Next" tooltip.
 - No backend. The old Netlify Function (`/api/overview`) and its Netlify Database
   migrations from v0.0.1 are still deployed but the page no longer uses them.
@@ -69,11 +80,12 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **Repo had no framework** (plain HTML + one Netlify Function), so "keep its framework"
   wasn't possible with shadcn. Added Vite + React to the same repo and kept the Netlify
   site, config and functions; `netlify.toml` now builds `dist/`.
-- **Period picker** sits on the right of the period row (per the build brief), not in the
-  header. It also drives the Now row's delta and sparkline ("vs prev 7d/28d/90d"), since a
-  delta needs a comparison window. Each card carries `by_period` values for 7d/28d/90d;
+- **Period picker** sits in the header next to "Data as of" (round 6; it was on the period
+  row before). It drives Revenue and every card's delta and sparkline ("vs prev
+  7d/28d/90d"), since a delta needs a comparison window. Each card carries `by_period` values for 7d/28d/90d;
   top-level fields are the 28d values, matching PRD section 8.
-- **Period dates**: 28 days inclusive, 17 Sep – 14 Oct (PRD example said 16 Sep).
+- **Period dates**: full days ending the day before the cutoff, so 28d is 16 Sep – 13 Oct
+  (as in the PRD). Only the dates moved in round 6; the values are unchanged.
 - **New project**: sample data is opt-in since round 2 (empty cards by default). Empty
   cards hide the window/freshness line and the chart/rows links too, so they show only
   label, dash and "No data yet". The first incomplete setup task is highlighted.
@@ -89,6 +101,11 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
   "neutre", which looks up and to the side like the x.ai bot; hover switches to "excite".
 - **New project Now row**: "Show sample data" switch sits left of "Data as of".
 - **Below volume gate**: deltas and sparklines hidden with "Not enough data yet".
+- **Default Rico reply** now says "the numbers on this page" instead of "the six numbers".
+- **"Card swapping / custom layout"** stays in "Not on this page": (+) adds from a fixed list
+  of five, it doesn't rearrange or swap the defaults.
+- **Screenshots 08 and 09** are the (+) picker and the What changed tiles (round 6 brief);
+  the Rico mascot and drag shots moved to 10 and 11.
 - **"Business" tag** is indigo (the page's one accent) rather than a separate blue.
 - **Dialog backdrop blur removed** so the What changed strip stays readable behind the
   chart modal in screenshot 4.

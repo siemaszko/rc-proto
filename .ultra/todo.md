@@ -24,3 +24,10 @@
 - [x] New project: setup tasks open a drawer (steps, snippet, Open flow toast, mark done)
 - [x] New project: empty cards by default, "Show sample data" switch, sparkline draw-in
 - [x] Screenshots 02, 04, 06, 07 re-taken and copied; README; push and confirm deploy
+
+## Round 6 (brief 15.10, 45 min box)
+- [x] Four cards in one row, optional_cards in JSON, picker in header, full-day windows
+- [x] (+) slot with picker (max 2, removable), phone "Add a card" row
+- [x] What changed tiles with action + Ask Rico why, "1 more", gated tile
+- [x] Active subs incl./excl., Rico copy + "new customers" reply, Not-on-page line, rule 3
+- [x] Screenshots 02, 03, 04, 08, 09 (Rico shots moved to 10, 11), README, deploy

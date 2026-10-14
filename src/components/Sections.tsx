@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { RicoAvatar } from "@/components/Rico";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 import type { Overview, Transaction } from "@/types";
@@ -16,45 +17,60 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
 
 const ICONS = { up: TrendingUp, down: TrendingDown, book: BookOpen } as const;
 
+type ChangeItem = Overview["what_changed"][number];
+
+// Two tiles side by side under the cards; anything past two waits behind "N more".
+// Each tile: tag, sentence, and bottom-right the action plus "Ask Rico why".
 export function WhatChanged({
-  data,
-  onOpen,
-}: {
-  data: Overview;
-  onOpen: (item: Overview["what_changed"][number]) => void;
-}) {
+  data, onAction, onAskRico,
+}: { data: Overview; onAction: (item: ChangeItem) => void; onAskRico: (item: ChangeItem) => void }) {
+  const [expanded, setExpanded] = useState(false);
   if (data.state === "new_project") return null;
   const gate = data.volume_gate;
-  if (gate.current < gate.threshold_tx_per_week) {
-    return (
-      <p className="text-sm text-neutral-400">
-        What changed appears once you have {gate.threshold_tx_per_week}+ transactions a week.
-      </p>
-    );
-  }
+  const gated = gate.current < gate.threshold_tx_per_week;
+  const shown = expanded ? data.what_changed : data.what_changed.slice(0, 2);
+  const more = data.what_changed.length - shown.length;
   return (
     <section className="flex flex-col gap-3" aria-labelledby="what-changed">
       <SectionTitle><span id="what-changed">What changed</span></SectionTitle>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {data.what_changed.slice(0, 3).map((item) => {
-          const Icon = ICONS[item.icon as keyof typeof ICONS];
-          const business = item.kind === "business";
-          return (
-            <Card key={item.text} className={cn(panel, "gap-3 p-4")}>
-              <div className="flex items-center justify-between">
-                <Icon className={cn("size-4", item.icon === "up" ? "text-emerald-600" : item.icon === "down" ? "text-rose-600" : "text-neutral-500")} />
-                <Badge className={business ? "bg-indigo-50 text-indigo-700" : "bg-neutral-100 text-neutral-700"}>
-                  {business ? "Business" : "Definition / data"}
-                </Badge>
-              </div>
-              <p className="flex-1 text-sm text-neutral-800">{item.text}</p>
-              <button onClick={() => onOpen(item)} className="flex items-center gap-1 self-start text-sm font-medium text-indigo-600 hover:underline">
-                {item.link.label} <ArrowRight className="size-3.5" />
-              </button>
-            </Card>
-          );
-        })}
-      </div>
+      {gated ? (
+        <Card className={cn(panel, "border-dashed bg-transparent p-4")}>
+          <p className="text-sm text-neutral-400">What changed appears at {gate.threshold_tx_per_week}+ transactions a week.</p>
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {shown.map((item) => {
+              const Icon = ICONS[item.icon as keyof typeof ICONS];
+              const business = item.kind === "business";
+              return (
+                <Card key={item.text} className={cn(panel, "gap-3 p-4")}>
+                  <div className="flex items-center justify-between">
+                    <Icon className={cn("size-4", item.icon === "up" ? "text-emerald-600" : item.icon === "down" ? "text-rose-600" : "text-neutral-500")} />
+                    <Badge className={business ? "bg-indigo-50 text-indigo-700" : "bg-neutral-100 text-neutral-700"}>
+                      {business ? "Business" : "Definition / data"}
+                    </Badge>
+                  </div>
+                  <p className="flex-1 text-sm text-neutral-800">{item.text}</p>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Button variant="ghost" size="sm" className="text-neutral-600" onClick={() => onAskRico(item)}>
+                      <RicoAvatar size={16} /> Ask Rico why
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-indigo-700" onClick={() => onAction(item)}>
+                      {item.link.label} <ArrowRight />
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+          {more > 0 && (
+            <button onClick={() => setExpanded(true)} className="self-start text-sm font-medium text-indigo-600 hover:underline">
+              {more} more
+            </button>
+          )}
+        </>
+      )}
     </section>
   );
 }
@@ -164,7 +180,7 @@ export function DesignRules({ onNotOnPage }: { onNotOnPage: () => void }) {
       <ol className="flex list-decimal flex-col gap-1 pl-4">
         <li>You never have to ask if the number is right: definition, window and freshness are on the card.</li>
         <li>A number without direction is incomplete: every card shows change and trend.</li>
-        <li>Every card leads somewhere: chart and rows, same period, same cutoff.</li>
+        <li>Every card leads somewhere: chart, rows, and when there&apos;s something to do, the action.</li>
       </ol>
       <Button variant="link" className="h-auto shrink-0 p-0 text-xs text-indigo-600" onClick={onNotOnPage}>
         Not on this page, and why →

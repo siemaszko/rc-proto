@@ -1,4 +1,5 @@
-// Takes the PRD screenshots (01-05), the drawers (06-07) and the Rico mascot (08) and its drag (09) into ./screenshots. Needs the dev server: npm run dev
+// Takes the PRD screenshots (01-05), the drawers (06-07), the (+) picker (08), What changed
+// tiles (09), the Rico mascot (10) and its drag (11) into ./screenshots. Needs the dev server: npm run dev
 // Usage: node scripts/screenshots.mjs [url]
 import { chromium } from "playwright";
 
@@ -24,11 +25,12 @@ await shot("01-today.png", { fullPage: true });
 
 // 2. Proposed, Normal
 await page.getByRole("tab", { name: "Proposed" }).click();
+await page.waitForTimeout(300); // let the tab highlight finish its transition
 await shot("02-proposed-normal.png", { fullPage: true });
 
-// 3. One card with the (i) popover open
-const card = page.locator("[data-slot=card]", { hasText: "New customers" }).first();
-await card.getByRole("button", { name: "What is New customers?" }).click();
+// 3. One card with the (i) popover open: Active subscriptions, with incl./excl. lines
+const card = page.locator("[data-slot=card]", { hasText: "Active subscriptions" }).first();
+await card.getByRole("button", { name: "What is Active subscriptions?" }).click();
 const popover = page.locator("[data-slot=popover-content]");
 await popover.waitFor();
 const a = await card.boundingBox(), b = await popover.boundingBox();
@@ -48,45 +50,99 @@ await page.waitForTimeout(250);
 await shot("04-what-changed-and-modal.png");
 await page.keyboard.press("Escape");
 
+const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
+const cardCount = () => page.getByRole("region", { name: "Key numbers" }).locator("[data-slot=card]").count();
+check((await cardCount()) === 4, "4 default cards");
+
+// 8. (+) picker open over the card row; then add two, (+) disables, remove one.
+await page.evaluate(() => window.scrollTo(0, 0));
+const plus = page.getByRole("button", { name: "Add a card" }).first();
+await plus.click();
+const picker = page.locator("[data-slot=popover-content]");
+await picker.waitFor();
+await page.waitForTimeout(200);
+{
+  const row = await page.getByRole("region", { name: "Key numbers" }).boundingBox(), pb = await picker.boundingBox();
+  const y0 = row.y - 16;
+  await shot("08-plus-picker.png", { clip: { x: row.x - 16, y: y0, width: row.width + 32, height: Math.max(row.y + row.height, pb.y + pb.height) - y0 + 16 } });
+}
+await picker.getByRole("button", { name: /Trial conversion/ }).click();
+await plus.click();
+await picker.getByRole("button", { name: /Churn/ }).click();
+check((await cardCount()) === 6, "two extra cards added");
+check((await plus.getAttribute("aria-disabled")) === "true", "(+) disabled at 2");
+await page.getByRole("button", { name: "Remove Churn", exact: true }).click();
+check((await cardCount()) === 5, "extra card removed");
+await page.getByRole("button", { name: "Remove Trial conversion", exact: true }).click();
+
+// 9. What changed: two tiles, "1 more", Ask Rico why.
+const tiles = page.getByRole("region", { name: "What changed" });
+await tiles.scrollIntoViewIfNeeded();
+await page.waitForTimeout(150);
+{
+  const t = await tiles.boundingBox();
+  await shot("09-what-changed-tiles.png", { clip: { x: t.x - 16, y: t.y - 16, width: t.width + 32, height: t.height + 32 } });
+}
+check((await tiles.locator("[data-slot=card]").count()) === 2, "two tiles before 1 more");
+await tiles.getByRole("button", { name: "1 more" }).click();
+check((await tiles.locator("[data-slot=card]").count()) === 3, "three tiles after 1 more");
+await tiles.getByRole("button", { name: /Test a new paywall/ }).click();
+await page.getByText("Would open Experiments with this segment pre-selected").waitFor();
+await page.keyboard.press("Escape");
+await page.waitForTimeout(300);
+await tiles.getByRole("button", { name: "Ask Rico why" }).first().click();
+{
+  const d = page.locator("[data-slot=sheet-content]");
+  await d.getByText("MRR up 6.1% vs previous 28 days").waitFor();
+  await d.getByText("31 new annual subscriptions drove most of it").waitFor();
+  const msg = d.getByRole("textbox", { name: "Message Rico" });
+  await msg.fill("Where did new customers go?");
+  await msg.press("Enter");
+  await d.getByText("Those cards moved off the defaults").waitFor();
+  await d.getByRole("button", { name: "Add card" }).click();
+  await page.waitForTimeout(300);
+  check((await page.getByRole("button", { name: "Remove New customers", exact: true }).count()) === 1, "Rico's Add card appends New customers");
+  await page.getByRole("button", { name: "Remove New customers", exact: true }).click();
+}
+
 const setState = async (state) => {
   await page.getByRole("combobox").filter({ hasText: /Normal|Below volume gate|New project/ }).click();
   await page.getByRole("option", { name: state }).click();
   await page.waitForTimeout(150);
 };
-const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
-
 // 7. Rico drawer: a chip, a typed question, mocked replies.
 await page.evaluate(() => window.scrollTo(0, 0));
-// 8. Rico mascot in the corner: hover jiggles it and shows the tooltip.
+// 10. Rico mascot in the corner: hover jiggles it and shows the tooltip.
 const mascot = page.getByRole("button", { name: "Ask Rico", exact: true });
 await mascot.locator("canvas, svg").first().waitFor();
 await mascot.hover();
 await page.getByText("Ask Rico anything about this page").waitFor();
 await page.waitForTimeout(120);
 const m = await mascot.boundingBox();
-await shot("08-rico-mascot-hover.png", { clip: { x: m.x - 260, y: m.y - 40, width: m.width + 284, height: m.height + 64 } });
+await shot("10-rico-mascot-hover.png", { clip: { x: m.x - 260, y: m.y - 40, width: m.width + 284, height: m.height + 64 } });
 await mascot.click();
 const drawer = page.locator("[data-slot=sheet-content]");
 await drawer.waitFor();
 const msg = drawer.getByRole("textbox", { name: "Message Rico" });
 await drawer.getByRole("button", { name: "Why did MRR go up?" }).click();
-await drawer.getByText("31 new annual subscriptions").waitFor();
+await drawer.getByText("drove most of it").last().waitFor();
 await msg.fill("Is this number right?");
 await msg.press("Enter");
-await drawer.getByText("Customer cards are cached").waitFor();
+await drawer.getByText("Customer cards are cached").last().waitFor();
 await msg.fill("Why are trials down?");
 await msg.press("Enter");
-await drawer.getByText("Most of the drop is on Android").waitFor();
+await drawer.getByText("Most of the drop is on Android").last().waitFor();
 await shot("07-rico-drawer.png");
-await drawer.getByRole("button", { name: "Open MRR chart" }).click();
+await drawer.getByRole("button", { name: "Open MRR chart" }).last().click();
 await page.getByRole("dialog", { name: /MRR/ }).waitFor();
 await page.keyboard.press("Escape");
 
 // Exercise the other states and dialogs for console errors.
 await setState("Below volume gate");
+await page.getByText("What changed appears at 10+ transactions a week.").waitFor();
 await shot("state-below-volume-gate.png", { fullPage: true });
 await setState("New project");
-check((await page.getByText("No data yet").count()) === 6, "6 empty cards in New project");
+check((await page.getByText("No data yet").count()) === 4, "4 empty cards in New project");
 await shot("state-new-project.png", { fullPage: true });
 await page.getByRole("switch").click();
 await page.waitForTimeout(250);
@@ -111,7 +167,7 @@ await page.getByRole("button", { name: "Not on this page, and why →" }).click(
 await page.getByRole("dialog").waitFor();
 await page.keyboard.press("Escape");
 
-// 9. Drag Rico to another corner: drop spots appear, it snaps to the nearest one.
+// 11. Drag Rico to another corner: drop spots appear, it snaps to the nearest one.
 {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(400); // let the last dialog's overlay finish closing
@@ -120,7 +176,7 @@ await page.keyboard.press("Escape");
   await page.mouse.down();
   for (let i = 1; i <= 12; i++) await page.mouse.move(r.x + r.width / 2 - i * 70, r.y + r.height / 2 - i * 55);
   await page.waitForTimeout(150);
-  await shot("09-rico-drag.png");
+  await shot("11-rico-drag.png");
   await page.mouse.up();
   await page.waitForTimeout(500);
   const after = await mascot.boundingBox();

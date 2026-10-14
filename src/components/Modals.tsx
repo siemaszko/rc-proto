@@ -70,6 +70,7 @@ export function RowsModal({ ctx, open, onOpenChange }: { ctx: Ctx | null; open: 
 }
 
 const NOT_ON_PAGE = [
+  ["New customers / Active customers", "Not daily-decision numbers for most small apps, and the slowest to refresh. One tap away under (+)."],
   ["Card swapping / custom layout", "Small devs don't configure; strong defaults work. Customization is an escape hatch for later."],
   ["Health score", "A new number nobody can check. It would add a trust problem, not solve one."],
   ["AI summary", "Rico already exists. This page's job is the 5-second glance, not a paragraph."],
@@ -110,6 +111,19 @@ export function ExplainerModal({ open, onOpenChange }: { open: boolean; onOpenCh
         <p className="text-sm text-neutral-700">
           Revenue for 1-6 Oct was restated under the new rule. Overview, Charts, the API and the mobile app all use the same definitions.
         </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function ExperimentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Test a new paywall (stub)</DialogTitle>
+          <DialogDescription>Would open Experiments with this segment pre-selected.</DialogDescription>
+        </DialogHeader>
       </DialogContent>
     </Dialog>
   );

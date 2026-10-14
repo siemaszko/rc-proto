@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Info } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Info, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Separator } from "@/components/ui/separator";
 import { Sparkline } from "@/components/Sparkline";
 import { cn } from "@/lib/utils";
-import { formatDelta, formatValue, periodLabel, presetDays, timeUtc } from "@/lib/format";
+import { formatDelta, formatValue, presetDays, timeUtc } from "@/lib/format";
 import type { CardData, Preset } from "@/types";
 
 type Props = {
   card: CardData;
   preset: Preset;
+  /** "In total, now" or "Last 28 full days · through 13 Oct" */
+  window: string;
+  /** Extra lines under the definition in the (i) popover. */
+  notes?: string[];
+  /** Cards added under (+) can be removed again. */
+  onRemove?: () => void;
   asOf: string;
   gated: boolean;
   sample: boolean;
@@ -23,12 +29,14 @@ type Props = {
 };
 
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+// Cards where a rise is bad news: the delta turns red when it goes up.
+const LOWER_IS_BETTER = new Set(["churn"]);
 
-export function MetricCard({ card, preset, asOf, gated, sample, empty, onOpenChart, onOpenRows }: Props) {
+export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated, sample, empty, onOpenChart, onOpenRows }: Props) {
   const p = card.by_period[preset];
-  const window = card.row === "now" ? card.window : periodLabel(preset);
   const up = p.delta_pct > 0, down = p.delta_pct < 0;
-  const tone = up ? "text-emerald-600" : down ? "text-rose-600" : "text-neutral-500";
+  const good = LOWER_IS_BETTER.has(card.id) ? down : up, bad = LOWER_IS_BETTER.has(card.id) ? up : down;
+  const tone = good ? "text-emerald-600" : bad ? "text-rose-600" : "text-neutral-500";
   const cached = card.freshness.kind === "cached";
   const caveat = "caveat" in card.freshness ? (card.freshness.caveat as string) : null;
 
@@ -61,6 +69,7 @@ export function MetricCard({ card, preset, asOf, gated, sample, empty, onOpenCha
             <PopoverContent side="right" align="start" sideOffset={12} className="w-80 gap-2 p-3" onClick={stop}>
               <p className="text-sm font-medium text-neutral-900">{card.label}</p>
               <p className="text-sm text-neutral-700">{card.definition}</p>
+              {notes && <div className="text-sm text-neutral-900 tabular-nums">{notes.map((n) => <p key={n}>{n}</p>)}</div>}
               <p className="text-xs text-neutral-500">Same definition as Charts v3.</p>
               <Separator />
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-neutral-600">
@@ -79,10 +88,16 @@ export function MetricCard({ card, preset, asOf, gated, sample, empty, onOpenCha
               </div>
             </PopoverContent>
           </Popover>
+          {onRemove && (
+            <button onClick={(e) => { stop(e); onRemove(); }} aria-label={`Remove ${card.label}`} className="-m-1 rounded p-1 text-neutral-400 hover:text-neutral-700">
+              <X className="size-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="mt-2 flex items-baseline justify-between gap-3">
+      {/* Number, then the delta on its own line: four cards to a row leave no room side by side. */}
+      <div className="mt-2 flex flex-col gap-1">
         <span className={cn("text-[28px] leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
           {empty ? "—" : formatValue(p.value, card.unit)}
         </span>
@@ -91,7 +106,7 @@ export function MetricCard({ card, preset, asOf, gated, sample, empty, onOpenCha
         ) : gated ? (
           <span className="text-xs text-neutral-400">Not enough data yet</span>
         ) : (
-          <span className={cn("flex items-center gap-0.5 text-[13px] font-medium tabular-nums", tone)}>
+          <span className={cn("flex items-center gap-0.5 text-[13px] font-medium whitespace-nowrap tabular-nums", tone)}>
             {up ? <ArrowUpRight className="size-3.5" /> : down ? <ArrowDownRight className="size-3.5" /> : null}
             {formatDelta(p.delta_pct)}
             <span className="ml-1 font-normal text-neutral-400">vs prev {presetDays[preset]}d</span>

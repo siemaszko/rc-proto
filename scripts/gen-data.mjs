@@ -4,7 +4,8 @@ import { writeFileSync } from "node:fs";
 
 const AS_OF = "2026-10-14T19:42:00Z";
 const CACHED_AT = "2026-10-14T18:00:00Z";
-const END = new Date("2026-10-14T00:00:00Z");
+// Flow periods are full days: the last one is the day before the cutoff.
+const END = new Date("2026-10-13T00:00:00Z");
 const DAYS = 200;
 const PRESETS = { "7d": 7, "28d": 28, "90d": 90 };
 
@@ -59,9 +60,16 @@ const DEFS = {
   revenue: "Gross revenue from all transactions in the period, refunds on refund date.",
   new_customers: "Customers first seen in the period.",
   active_customers: "Customers with at least one active entitlement at any point in the period.",
+  trial_conversion: "Share of trials that ended in the period and converted to paid.",
+  churn: "Share of paid subscriptions active at the start of the period that expired during it.",
+  realized_ltv: "Revenue per paying customer to date, net of refunds, for customers who started in the last 12 months.",
 };
 
-function buildCards(s) {
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const through = () => `${END.getUTCDate()} ${MONTHS[END.getUTCMonth()]}`;
+const fullDays = (n) => `Last ${n} full days · through ${through()}`;
+
+function buildCards(s, rates) {
   const card = (id, row, label, unit, window, freshness, byPeriod) => ({
     id, row, label, unit, window,
     ...byPeriod["28d"],
@@ -92,14 +100,32 @@ function buildCards(s) {
     return [k, { value: cur, delta_pct: pct(cur, prev), sparkline: downsample(spark) }];
   }));
 
-  return [
+  // A rate per preset: its value now, its value one window earlier, and a 30-point walk between.
+  const rate = (seed, [now28, prev28, spread], decimals) => Object.fromEntries(Object.entries(PRESETS).map(([k, n]) => {
+    const r = rng(seed + n);
+    const k1 = n / 28, round = (x) => Math.round(x * 10 ** decimals) / 10 ** decimals;
+    const now = round(now28 + (r() - 0.5) * spread * (k1 - 1) * 0.5), prev = round(prev28 + (now - now28));
+    const spark = Array.from({ length: 30 }, (_, i) => round(prev + ((now - prev) * i) / 29 + (r() - 0.5) * spread));
+    spark[29] = now;
+    return [k, { value: now, delta_pct: pct(now, prev), sparkline: spark }];
+  }));
+
+  // The four default cards, in the order they show.
+  const cards = [
+    card("mrr", "now", "MRR", "USD", "In total, now", realtime, now(s.mrr)),
     card("active_subscriptions", "now", "Active subscriptions", "count", "In total, now", realtime, now(s.subs)),
     card("active_trials", "now", "Active trials", "count", "In total, now", realtime, now(s.trials)),
-    card("mrr", "now", "MRR", "USD", "In total, now", realtime, now(s.mrr)),
-    card("revenue", "period", "Revenue", "USD", "Last 28 days", { ...realtime, caveat: "Late refunds may adjust up to 7 days." }, flow(s.revenue)),
-    card("new_customers", "period", "New customers", "count", "Last 28 days", cached, flow(s.newCustomers)),
-    card("active_customers", "period", "Active customers", "count", "Last 28 days", cached, activeCustomers),
+    card("revenue", "period", "Revenue", "USD", fullDays(28), { ...realtime, caveat: "Late refunds may adjust up to 7 days." }, flow(s.revenue)),
   ];
+  // Cards one tap away under (+). Same shape as `cards`.
+  const optional_cards = {
+    new_customers: card("new_customers", "period", "New customers", "count", fullDays(28), cached, flow(s.newCustomers)),
+    active_customers: card("active_customers", "period", "Active customers", "count", fullDays(28), cached, activeCustomers),
+    trial_conversion: card("trial_conversion", "period", "Trial conversion", "percent", fullDays(28), cached, rate(11, rates.conversion, 0)),
+    churn: card("churn", "period", "Churn", "percent", fullDays(28), cached, rate(23, rates.churn, 1)),
+    realized_ltv: card("realized_ltv", "period", "Realized LTV", "USD", fullDays(28), cached, rate(37, rates.ltv, 0)),
+  };
+  return { cards, optional_cards };
 }
 
 function scenario(seed, p) {
@@ -138,28 +164,33 @@ const PRODUCTS = [
   { name: "Pro Annual", price: 49.99 },
 ];
 
-function file(state, s, extra) {
+function file(state, s, rates, subsSplit, extra) {
   return {
     as_of: AS_OF,
     period: { preset: "28d", ...periodRange(28) },
     periods: Object.fromEntries(Object.entries(PRESETS).map(([k, n]) => [k, periodRange(n)])),
     state,
     app: { id: "app_dayflow", name: "Dayflow", platform: "iOS" },
-    cards: buildCards(s),
+    ...buildCards(s, rates),
+    // Active subscriptions with and without cancelled-but-not-expired, for its (i) popover.
+    active_subs_incl: subsSplit[0],
+    active_subs_excl: subsSplit[1],
     ...extra,
   };
 }
 
+// rates: [value now, value one window earlier, noise] for trial conversion %, churn %, LTV $.
 const normal = file("normal", scenario(42, {
   subs: [389, 412, 6], trials: [68, 61, 4], mrr: [4826, 5120, 60],
   revenue: { mean: 205, trend: 0.25, noise: 0.5, weekly: 0.12 },
   newCustomers: { mean: 41, trend: 0.2, noise: 0.5, weekly: 0.15 },
   churned: { mean: 1.6, trend: 0, noise: 0.8, weekly: 0 },
-}), {
+}), { conversion: [31, 38, 3], churn: [4.2, 3.9, 0.6], ltv: [38, 36, 2] }, [412, 388], {
+  // link.action: "chart" opens the chart modal for link.metric, "experiment" and "explainer" open stubs.
   what_changed: [
-    { kind: "business", icon: "up", text: "MRR up 6.1% vs previous 28 days, driven by 31 new annual subscriptions.", link: { label: "Open MRR chart", metric: "MRR" } },
-    { kind: "business", icon: "down", text: "Trial-to-paid conversion down from 38% to 31% this period.", link: { label: "Open conversion chart", metric: "Trial conversion" } },
-    { kind: "definition", icon: "book", text: "Charts v3 definitions since 6 Oct: refunds now count on refund date. Revenue for 1-6 Oct restated.", link: { label: "Read the explainer", metric: null } },
+    { kind: "business", icon: "up", text: "MRR up 6.1% vs previous 28 days, driven by 31 new annual subscriptions.", link: { label: "Open MRR chart", metric: "MRR", action: "chart" } },
+    { kind: "business", icon: "down", text: "Trial-to-paid conversion down from 38% to 31% this period.", link: { label: "Test a new paywall", metric: "Trial conversion", action: "experiment" } },
+    { kind: "definition", icon: "book", text: "Charts v3 definitions since 6 Oct: refunds now count on refund date. Revenue for 1-6 Oct restated.", link: { label: "Read the explainer", metric: null, action: "explainer" } },
   ],
   volume_gate: { threshold_tx_per_week: 10, current: 84 },
   recent_transactions: transactions(42, 10, PRODUCTS),
@@ -170,7 +201,7 @@ const lowVolume = file("low_volume", scenario(7, {
   revenue: { mean: 4.6, trend: 0.1, noise: 1.6, weekly: 0 },
   newCustomers: { mean: 3, trend: 0.1, noise: 1.2, weekly: 0 },
   churned: { mean: 0.1, trend: 0, noise: 1, weekly: 0 },
-}), {
+}), { conversion: [33, 40, 12], churn: [7.1, 6.5, 3], ltv: [24, 22, 4] }, [14, 13], {
   what_changed: [],
   volume_gate: { threshold_tx_per_week: 10, current: 4 },
   recent_transactions: transactions(7, 4, PRODUCTS),
@@ -181,7 +212,7 @@ const newProject = file("new_project", scenario(1234, {
   revenue: { mean: 118, trend: 0.2, noise: 0.5, weekly: 0.1 },
   newCustomers: { mean: 26, trend: 0.2, noise: 0.5, weekly: 0.15 },
   churned: { mean: 1, trend: 0, noise: 0.8, weekly: 0 },
-}), {
+}), { conversion: [35, 33, 3], churn: [3.8, 4.1, 0.6], ltv: [41, 39, 2] }, [256, 241], {
   sample: true,
   what_changed: [],
   volume_gate: { threshold_tx_per_week: 10, current: 0 },
@@ -202,4 +233,6 @@ const newProject = file("new_project", scenario(1234, {
 for (const [name, data] of Object.entries({ normal, low_volume: lowVolume, new_project: newProject })) {
   writeFileSync(new URL(`../src/data/${name}.json`, import.meta.url), JSON.stringify(data, null, 2) + "\n");
 }
-console.log("MRR", normal.cards[2].value, normal.cards[2].delta_pct, "| subs", normal.cards[0].value, "| trials", normal.cards[1].value, "| revenue", normal.cards[3].value, normal.cards[3].delta_pct, "| new", normal.cards[4].value, "| active cust", normal.cards[5].value);
+const o = normal.optional_cards;
+console.log("MRR", normal.cards[0].value, normal.cards[0].delta_pct, "| subs", normal.cards[1].value, "| trials", normal.cards[2].value, "| revenue", normal.cards[3].value, normal.cards[3].delta_pct, normal.period,
+  "| new", o.new_customers.value, o.new_customers.delta_pct, "| active cust", o.active_customers.value, "| conv", o.trial_conversion.value, "| churn", o.churn.value, "| ltv", o.realized_ltv.value);
