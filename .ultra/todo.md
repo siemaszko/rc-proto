@@ -23,4 +23,4 @@
 - [x] Rico input under the header (all states) + chat drawer with mocked replies and chips
 - [x] New project: setup tasks open a drawer (steps, snippet, Open flow toast, mark done)
 - [x] New project: empty cards by default, "Show sample data" switch, sparkline draw-in
-- [ ] Screenshots 02, 04, 06, 07 re-taken and copied; README; push and confirm deploy
+- [x] Screenshots 02, 04, 06, 07 re-taken and copied; README; push and confirm deploy
