@@ -13,7 +13,7 @@ npm install
 npm run dev                 # http://localhost:5173
 npm run build               # static build into dist/ (what Netlify serves)
 node scripts/gen-data.mjs   # regenerate the mock JSON (fixed seeds, deterministic)
-npm run screenshots         # screenshots 01-07 into screenshots/, plus click-through checks (needs dev server + Chrome)
+npm run screenshots         # screenshots 01-08 into screenshots/, plus click-through checks (needs dev server + Chrome)
 ```
 
 Push to `main` deploys to Netlify.
@@ -22,21 +22,24 @@ Push to `main` deploys to Netlify.
 
 - **Prototype dock** (dark, floating at the bottom): Today / Proposed tabs and the State
   select (Normal, Below volume gate, New project). State only swaps the JSON file.
-- **Proposed**: header with app selector and an "Ask Rico about this page" link on the right;
-  **Now** row with the one "Data as of" cutoff on the right of its title
+- **Proposed**: header with app selector; **Now** row with the one "Data as of" cutoff on the right of its title
   (Active subscriptions, Active trials, MRR); **period** row (Revenue, New customers,
   Active customers) with the 7d / 28d / 90d picker; **What changed** strip (max 3, tagged
   Business or Definition / data); Recent transactions (collapsed); footer with the 3 design
   rules and "Not on this page, and why".
-- **Ask Rico**: a text link in the header, in every state (round 3; round 2 had a 40px input
-  under the header). It opens a 420px right drawer (full width on a phone) with 3 prompt
-  chips and a mocked chat: replies after 600ms, keyed on "mrr", "trial",
+- **Rico mascot** (round 4): an indigo blob with two pill eyes floating in the bottom-right
+  corner (above the dock on a phone), drawn with three.js (lazy-loaded, SVG fallback). It
+  breathes, bobs, blinks and follows the pointer with its eyes; hover or click jiggles it
+  (damped spring) and hover shows "Ask Rico anything about this page". Click opens a 420px
+  right drawer (full width on a phone), styled like iMessage: Rico's avatar and name on top,
+  3 prompt chips, Rico's grey bubbles with its face beside them, your blue bubbles, a typing
+  bubble, and a mocked chat: replies after 600ms, keyed on "mrr", "trial",
   "right/correct/trust", else a default. MRR and trial replies have a button to the chart modal.
 - **New project** (round 2): the setup card lists 6 tasks (2 of 6 done); each opens the same
   drawer with numbered steps, a code snippet for the SDK step, "Open <flow>" (toast stub) and
   a "Mark done" checkbox that updates the card. Cards are empty ("—", "No data yet") until
   the "Show sample data" switch next to Now is on; then they fill with watermarked sample
-  values and the sparklines draw in (600ms, ease-out, the page's only animation).
+  values and the sparklines draw in (600ms, ease-out).
 - **Card**: label, (i) definition popover, big number, delta vs previous period,
   28-point sparkline in the delta color, window and freshness line, Open chart / View rows.
   Clicking anywhere on the card opens the chart.
@@ -69,8 +72,11 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **New project**: sample data is opt-in since round 2 (empty cards by default). Empty
   cards hide the window/freshness line and the chart/rows links too, so they show only
   label, dash and "No data yet". The first incomplete setup task is highlighted.
+- **Rico entry point**: only the floating mascot, on the Proposed view (round 2 had an
+  input under the header, round 3 a header link; both removed). Today keeps its old Rico bar.
 - **Rico drawer closes without returning focus** (kept from round 2, when focusing the page
   input reopened the drawer).
+- **iMessage blue** (#0a84ff) is used only inside the chat; the mascot stays page indigo.
 - **New project Now row**: "Show sample data" switch sits left of "Data as of".
 - **Below volume gate**: deltas and sparklines hidden with "Not enough data yet".
 - **"Business" tag** is indigo (the page's one accent) rather than a separate blue.
@@ -79,8 +85,8 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 
 ## Cut, and why
 
-- Real charts, routing, auth, tests, and any animation beyond the sample sparklines: out of
-  scope per PRD section 10.
+- Real charts, routing, auth, tests: out of scope per PRD section 10. Animations are limited
+  to the sample sparklines and Rico.
 - The "late refunds may adjust up to 7 days" caveat is a tooltip on Revenue's "as of"
   only, not a separate line, to keep cards the same height.
 - Mobile nav is a top bar with a non-functional menu button; the phone pass only makes

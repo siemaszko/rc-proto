@@ -1,4 +1,4 @@
-// Takes the PRD screenshots (01-05) and the round 2 drawers (06-07) into ./screenshots. Needs the dev server: npm run dev
+// Takes the PRD screenshots (01-05), the drawers (06-07) and the Rico mascot (08) into ./screenshots. Needs the dev server: npm run dev
 // Usage: node scripts/screenshots.mjs [url]
 import { chromium } from "playwright";
 
@@ -57,7 +57,15 @@ const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
 
 // 7. Rico drawer: a chip, a typed question, mocked replies.
 await page.evaluate(() => window.scrollTo(0, 0));
-await page.getByRole("button", { name: "Ask Rico about this page" }).click();
+// 8. Rico mascot in the corner: hover jiggles it and shows the tooltip.
+const mascot = page.getByRole("button", { name: "Ask Rico", exact: true });
+await mascot.locator("canvas").waitFor();
+await mascot.hover();
+await page.getByText("Ask Rico anything about this page").waitFor();
+await page.waitForTimeout(120);
+const m = await mascot.boundingBox();
+await shot("08-rico-mascot-hover.png", { clip: { x: m.x - 260, y: m.y - 40, width: m.width + 284, height: m.height + 64 } });
+await mascot.click();
 const drawer = page.locator("[data-slot=sheet-content]");
 await drawer.waitFor();
 const msg = drawer.getByRole("textbox", { name: "Message Rico" });
@@ -111,7 +119,7 @@ await phone.evaluate(() => document.fonts.ready);
 await phone.screenshot({ path: OUT + "05-phone.png" });
 const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 await phone.screenshot({ path: OUT + "phone-full.png", fullPage: true });
-await phone.getByRole("button", { name: "Ask Rico about this page" }).click();
+await phone.getByRole("button", { name: "Ask Rico", exact: true }).click();
 const phoneDrawer = await phone.locator("[data-slot=sheet-content]").boundingBox();
 check(Math.round(phoneDrawer.width) === 390, `phone drawer full width (${phoneDrawer.width}px)`);
 await phone.waitForTimeout(250);

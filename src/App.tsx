@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { FlaskConical, Info, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FlaskConical, Info } from "lucide-react";
 import normalData from "@/data/normal.json";
 import lowVolumeData from "@/data/low_volume.json";
 import newProjectData from "@/data/new_project.json";
@@ -14,6 +13,7 @@ import { Sidebar, TopBar } from "@/components/Shell";
 import { MetricCard, PlainCard } from "@/components/MetricCard";
 import { DesignRules, RecentTransactions, RicoBar, SectionTitle, SetupChecklist, WhatChanged } from "@/components/Sections";
 import { RicoDrawer, SetupDrawer } from "@/components/Drawers";
+import { RicoLauncher } from "@/components/Rico";
 import { ChartModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
 import { dateTimeUtc, periodLabel } from "@/lib/format";
 import type { CardData, ChartTarget, Overview, Preset, StateKey, View } from "@/types";
@@ -91,11 +91,6 @@ export default function App() {
                   </SelectContent>
                 </Select>
               </div>
-              {view === "proposed" && (
-                <Button variant="link" className="h-auto gap-1.5 p-0 text-indigo-600" onClick={() => setRicoOpen(true)}>
-                  <Sparkles /> Ask Rico about this page
-                </Button>
-              )}
             </header>
 
             {view === "today" ? (
@@ -186,6 +181,8 @@ export default function App() {
           </Select>
         </div>
       </div>
+
+      {view === "proposed" && <RicoLauncher onOpen={() => setRicoOpen(true)} />}
 
       <ChartModal ctx={ctx} definition={chart?.definition} open={chartOpen} onOpenChange={setChartOpen} onViewRows={() => { setChartOpen(false); setRowsOpen(true); }} />
       <RowsModal ctx={ctx} open={rowsOpen} onOpenChange={setRowsOpen} />

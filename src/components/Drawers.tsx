@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUp, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUp } from "lucide-react";
+import { RicoFace } from "@/components/Rico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,7 +40,9 @@ function reply(q: string): Message {
 export function RicoDrawer({
   open, onOpenChange, draft, onDraftChange, onOpenChart,
 }: { open: boolean; onOpenChange: (o: boolean) => void; draft: string; onDraftChange: (v: string) => void; onOpenChart: (metric: string) => void }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    { from: "rico", text: "Hi, I'm Rico. Ask me about the six numbers on this page and what changed." },
+  ]);
   const [typing, setTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -57,52 +60,85 @@ export function RicoDrawer({
     timers.current.push(window.setTimeout(() => { setMessages((m) => [...m, reply(q)]); setTyping(false); }, 600));
   };
 
+  // iMessage: Rico's avatar sits by the last bubble of each of its runs; that bubble gets a tail.
+  const lastOfRun = (i: number) => messages[i + 1]?.from !== messages[i].from && !(typing && i === messages.length - 1 && messages[i].from === "rico");
+
   return (
-    // Focus must not return to the page input on close: focusing it opens the drawer again.
     <SideDrawer open={open} onOpenChange={onOpenChange} initialFocus={inputRef} returnFocus={false}>
-      <SheetHeader className="gap-3 border-b border-neutral-200 pr-12">
-        <SheetTitle className="flex items-center gap-2"><Sparkles className="size-4 text-indigo-600" /> Rico</SheetTitle>
-        <SheetDescription className="sr-only">Ask about the numbers on this page.</SheetDescription>
-        <div className="flex flex-wrap gap-2">
+      <SheetHeader className="items-center gap-1 border-b border-neutral-200 bg-neutral-50/80 px-4 pt-5 pb-3 text-center">
+        <RicoFace size={48} tight />
+        <SheetTitle className="text-xs font-normal text-neutral-900">Rico</SheetTitle>
+        <SheetDescription className="sr-only">Chat with Rico about the numbers on this page.</SheetDescription>
+        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
           {RICO_CHIPS.map((c) => (
-            <button key={c} onClick={() => send(c)} className="rounded-full border border-neutral-200 px-3 py-1 text-xs text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50">
+            <button key={c} onClick={() => send(c)} className="rounded-full border border-[#0a84ff]/30 bg-white px-3 py-1 text-xs text-[#0a84ff] hover:bg-[#0a84ff]/5">
               {c}
             </button>
           ))}
         </div>
       </SheetHeader>
 
-      <div ref={listRef} className="flex flex-1 flex-col gap-3 overflow-y-auto p-4" aria-live="polite">
-        {!messages.length && !typing && (
-          <p className="text-sm text-neutral-400">Ask about the six numbers on this page and what changed.</p>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={cn("flex max-w-[85%] flex-col gap-2 rounded-2xl px-3 py-2 text-sm", m.from === "me" ? "self-end bg-indigo-600 text-white" : "self-start bg-neutral-100 text-neutral-800")}>
-            {m.text}
-            {m.chart && (
-              <Button size="sm" variant="outline" className="self-start bg-white" onClick={() => onOpenChart(m.chart!.metric)}>
-                {m.chart.label} <ArrowRight />
-              </Button>
-            )}
+      <div ref={listRef} className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4" aria-live="polite">
+        <p className="mb-3 text-center text-[11px] text-neutral-400"><span className="font-medium">Today</span> 19:43</p>
+        {messages.map((m, i) => {
+          const me = m.from === "me", tail = lastOfRun(i);
+          return (
+            <div key={i} className={cn("flex items-end gap-1.5", me ? "justify-end" : "justify-start", tail && "mb-2")}>
+              {!me && (tail ? <RicoFace size={28} tight className="shrink-0" /> : <span className="w-7 shrink-0" />)}
+              <Bubble me={me} tail={tail}>
+                {m.text}
+                {m.chart && (
+                  <button onClick={() => onOpenChart(m.chart!.metric)} className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-left text-[13px] font-medium text-[#0a84ff] hover:bg-neutral-50">
+                    {m.chart.label} <ArrowRight className="size-3.5" />
+                  </button>
+                )}
+              </Bubble>
+            </div>
+          );
+        })}
+        {typing && (
+          <div className="mb-2 flex items-end gap-1.5" aria-label="Rico is typing">
+            <RicoFace size={28} tight className="shrink-0" />
+            <Bubble me={false} tail>
+              <span className="flex h-5 items-center gap-1">
+                {[0, 150, 300].map((d) => <span key={d} className="size-2 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: `${d}ms` }} />)}
+              </span>
+            </Bubble>
           </div>
-        ))}
-        {typing && <p className="self-start text-xs text-neutral-400">Rico is typing…</p>}
+        )}
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); send(draft); }} className="flex items-center gap-2 border-t border-neutral-200 p-3">
-        <input
-          ref={inputRef}
-          value={draft}
-          onChange={(e) => onDraftChange(e.target.value)}
-          placeholder="Ask Rico about this page"
-          aria-label="Message Rico"
-          className="h-9 min-w-0 flex-1 rounded-lg border border-neutral-200 px-3 text-sm outline-none placeholder:text-neutral-400 focus:border-indigo-300"
-        />
-        <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim()} className="bg-indigo-600 text-white hover:bg-indigo-700">
-          <ArrowUp />
-        </Button>
+        <div className="flex min-w-0 flex-1 items-center rounded-full border border-neutral-300 py-1 pr-1 pl-4 focus-within:border-neutral-400">
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={(e) => onDraftChange(e.target.value)}
+            placeholder="iMessage Rico"
+            aria-label="Message Rico"
+            className="h-7 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-400"
+          />
+          <button type="submit" aria-label="Send" disabled={!draft.trim()} className="grid size-7 shrink-0 place-items-center rounded-full bg-[#0a84ff] text-white disabled:bg-neutral-300">
+            <ArrowUp className="size-4" strokeWidth={2.5} />
+          </button>
+        </div>
       </form>
     </SideDrawer>
+  );
+}
+
+// A chat bubble. The tail is a small curved notch on the bottom corner, iMessage style.
+function Bubble({ me, tail, children }: { me: boolean; tail: boolean; children: React.ReactNode }) {
+  const color = me ? "#0a84ff" : "#e9e9eb";
+  return (
+    <div className={cn("relative max-w-[78%] rounded-[18px] px-3 py-1.5 text-[15px] leading-snug", me ? "bg-[#0a84ff] text-white" : "bg-[#e9e9eb] text-neutral-900")}>
+      {children}
+      {tail && (
+        <svg aria-hidden viewBox="0 0 12 16" className={cn("absolute bottom-0 h-4 w-3", me ? "-right-1.5" : "-left-1.5 -scale-x-100")}>
+          <path d="M0 0 C0 9 3 14 12 16 C6 16.5 2 15 0 13 Z" fill={color} />
+        </svg>
+      )}
+    </div>
   );
 }
 
