@@ -146,25 +146,29 @@ export function RicoLauncher({ onOpen }: { onOpen: () => void }) {
   const left = corner === "bl" || corner === "tl";
   return (
     <>
-      {/* Drop spots: always mounted so they can be measured, shown in the other corners while
-          dragging. Rico's own corner stays invisible but still counts, so letting go near it
-          puts Rico back. */}
+      {/* Drop spots: always mounted so they can be measured. While dragging, the other corners
+          show "Drop here"; Rico's own corner shows a plain gray circle where it came from.
+          Letting go near it puts Rico back. */}
       {CORNERS.map((c) => (
         <div
           key={c}
           ref={(el) => { spots.current[c] = el; }}
           aria-hidden
-          className={cn("pointer-events-none fixed z-40 grid place-items-center", CORNER_CLASS[c], (!drag || c === corner) && "invisible")}
+          className={cn("pointer-events-none fixed z-40 grid place-items-center", CORNER_CLASS[c], !drag && "invisible")}
           style={{ width: size, height: size }}
         >
-          <span
-            className={cn(
-              "grid size-[62%] place-items-center rounded-full border-2 border-dashed text-center text-[10px] leading-tight font-medium transition-all duration-150",
-              drag?.target === c ? "scale-110 border-indigo-500 bg-indigo-100/80 text-indigo-700" : "border-indigo-300 bg-white/70 text-indigo-400",
-            )}
-          >
-            Drop<br />here
-          </span>
+          {c === corner ? (
+            <span className="size-[62%] rounded-full bg-neutral-200" />
+          ) : (
+            <span
+              className={cn(
+                "grid size-[62%] place-items-center rounded-full border-2 border-dashed text-center text-[10px] leading-tight font-medium transition-all duration-150",
+                drag?.target === c ? "scale-110 border-indigo-500 bg-indigo-100/80 text-indigo-700" : "border-indigo-300 bg-white/70 text-indigo-400",
+              )}
+            >
+              Drop<br />here
+            </span>
+          )}
         </div>
       ))}
 

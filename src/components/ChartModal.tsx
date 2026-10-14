@@ -71,7 +71,7 @@ function LineChart({ cur, prev, unit, start, end }: { cur: number[]; prev: numbe
   const mid = Math.floor((n - 1) / 2);
 
   return (
-    <div ref={box} className="relative">
+    <div ref={box} className="relative w-full min-w-0">
       <svg
         ref={svg}
         width={W}
@@ -127,9 +127,9 @@ export function ChartModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "gap-4 p-6 sm:max-w-[720px]",
+          "grid-cols-1 gap-4 p-6 sm:max-w-[720px]", // grid-cols-1 = minmax(0, 1fr): the chart follows the dialog, not the other way round
           // Phone: a full-screen sheet.
-          "max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:overflow-y-auto max-sm:rounded-none max-sm:p-4",
+          "max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:content-start max-sm:overflow-y-auto max-sm:rounded-none max-sm:p-4",
         )}
       >
         {ctx && card && p && (

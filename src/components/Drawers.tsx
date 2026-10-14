@@ -26,7 +26,7 @@ export function SideDrawer({
 
 /* ---------- Rico ---------- */
 
-export const RICO_CHIPS = ["Why did MRR go up?", "Is this number right?", "What should I look at today?"];
+export const RICO_CHIPS = ["Why did MRR go up?", "How is MRR calculated?", "What should I do next?"];
 
 type Message = {
   from: "me" | "rico";
@@ -34,26 +34,34 @@ type Message = {
   chart?: { label: string; metric: string };
   /** A card Rico offers to put back on the page, through the same logic as (+). */
   addCard?: { label: string; id: OptionalCardId };
+  /** The rows behind a metric (the rows stub). */
+  rows?: { label: string; metric: string };
+  /** The paywall experiment stub. */
+  experiment?: { label: string };
 };
 
 function reply(q: string): Message {
   const t = q.toLowerCase();
   if (t.includes("new customers") || t.includes("active customers"))
     return { from: "rico", text: "Those cards moved off the defaults. New customers, last 28 full days: 1,148, up 0.3%. Add it back?", addCard: { label: "Add card", id: "new_customers" } };
+  // Before "mrr": "How is MRR calculated?" is about the definition, not the change.
+  if (t.includes("calculated") || t.includes("definition"))
+    return { from: "rico", text: "MRR = monthly recurring revenue from active paid subscriptions, normalized to one month, in USD. Same definition as Charts v3. Computed at 19:42 UTC today. Want the 412 subscriptions behind it?", rows: { label: "View rows", metric: "MRR" } };
+  if (t.includes("do next") || t.includes("should i do"))
+    return { from: "rico", text: "Trial-to-paid fell from 38% to 31% this period, mostly on Android. That's the biggest lever right now. Start a paywall test for Android trials?", experiment: { label: "Test a new paywall" } };
   if (t.includes("mrr"))
     return { from: "rico", text: "MRR is $5,120, up 6.1% vs the previous 28 days. 31 new annual subscriptions drove most of it. Open the MRR chart?", chart: { label: "Open MRR chart", metric: "MRR" } };
   if (t.includes("trial"))
     return { from: "rico", text: "Trial-to-paid conversion fell from 38% to 31% this period. Most of the drop is on Android. Want the conversion chart?", chart: { label: "Open conversion chart", metric: "Trial conversion" } };
-  if (["right", "correct", "trust"].some((w) => t.includes(w)))
-    return { from: "rico", text: "All numbers on this page use Charts v3 definitions and the same cutoff, 14 Oct 19:42 UTC. Customer cards are cached, as of 18:00 UTC." };
   return { from: "rico", text: "I can answer questions about the numbers on this page, what changed, and your business. Try: why did MRR go up?" };
 }
 
 export function RicoDrawer({
-  open, onOpenChange, draft, onDraftChange, onOpenChart, onAddCard,
+  open, onOpenChange, draft, onDraftChange, onOpenChart, onOpenRows, onExperiment, onAddCard,
 }: {
   open: boolean; onOpenChange: (o: boolean) => void; draft: string; onDraftChange: (v: string) => void;
-  onOpenChart: (metric: string) => void; onAddCard: (id: OptionalCardId) => void;
+  onOpenChart: (metric: string) => void; onOpenRows: (metric: string) => void; onExperiment: () => void;
+  onAddCard: (id: OptionalCardId) => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([
     { from: "rico", text: "Hi, I'm Rico. Ask me about the numbers on this page, what changed, or your business." },
@@ -105,6 +113,16 @@ export function RicoDrawer({
                 {!me && (tail ? <RicoAvatar size={28} className="shrink-0" /> : <span className="w-7 shrink-0" />)}
                 <Bubble me={me} tail={tail}>
                   {m.text}
+                  {m.rows && (
+                    <button onClick={() => onOpenRows(m.rows!.metric)} className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-left text-[13px] font-medium text-[#0a84ff] hover:bg-neutral-50">
+                      {m.rows.label} <ArrowRight className="size-3.5" />
+                    </button>
+                  )}
+                  {m.experiment && (
+                    <button onClick={onExperiment} className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-left text-[13px] font-medium text-[#0a84ff] hover:bg-neutral-50">
+                      {m.experiment.label} <ArrowRight className="size-3.5" />
+                    </button>
+                  )}
                   {m.addCard && (
                     <button onClick={() => onAddCard(m.addCard!.id)} className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-left text-[13px] font-medium text-[#0a84ff] hover:bg-neutral-50">
                       {m.addCard.label} <Plus className="size-3.5" />

@@ -43,3 +43,10 @@
 - [x] What changed: 4 tiles aligned under the 4 cards, Rico button pre-fills the chat, gated tiles
 - [x] Lighter KPI cards: delta chip, 36px sparkline, hover links
 - [x] Screenshots 02, 03, 09; README; deploy
+
+## Round 9: final visual pass on Proposed (75 min box)
+- [x] A. 1120px column, "+ Add a card" above the grid
+- [x] B. 200px KPI cards, no face links, trust panel in (i)
+- [x] C. What changed tiles at 120px under the cards
+- [x] D. Chart modal with drawn SVG chart vs previous period
+- [x] E. Rico chips and replies, gray origin circle when dragging

@@ -71,6 +71,11 @@ export default function App() {
     setChart({ metric, definition: card?.definition, cardId: card?.id });
     setChartOpen(true);
   };
+  const openMetricRows = (metric: string) => {
+    const card = allCards.find((c) => c.label === metric);
+    setChart({ metric, definition: card?.definition, cardId: card?.id });
+    setRowsOpen(true);
+  };
   const openChart = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setChartOpen(true); };
   const openRows = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setRowsOpen(true); };
 
@@ -259,6 +264,8 @@ export default function App() {
         draft={ricoDraft}
         onDraftChange={setRicoDraft}
         onOpenChart={(metric) => { setRicoOpen(false); openMetric(metric); }}
+        onOpenRows={(metric) => { setRicoOpen(false); openMetricRows(metric); }}
+        onExperiment={() => { setRicoOpen(false); setExperimentOpen(true); }}
         onAddCard={(id) => { setRicoOpen(false); addCard(id); }}
       />
       <SetupDrawer

@@ -22,31 +22,31 @@ Push to `main` deploys to Netlify.
 
 - **Prototype dock** (dark, floating at the bottom): Today / Proposed tabs and the State
   select (Normal, Below volume gate, New project). State only swaps the JSON file.
-- **Proposed** (round 6 layout): header with app selector, the one "Data as of" cutoff and
-  the 7d / 28d / 90d picker (it drives Revenue and every delta). One row of four cards:
-  MRR, Active subscriptions, Active trials, Revenue (4 columns, 2x2 on a tablet, 1 on a
-  phone), each carrying its own window ("In total, now" / "Last 28 full days · through
-  13 Oct"). **(+)** at the row's end (a dashed "Add a card" row on a phone) adds up to two of
-  New customers, Active customers, Trial conversion, Churn, Realized LTV, each removable,
-  in memory only. **What changed** (round 8): one row of four compact tiles in the same
-  columns as the four cards, each under its card (icon + tag, a sentence of at most two
-  lines, the action link, and a 24px Rico button that pre-fills the chat with the sentence);
-  below the volume gate four muted tiles. Recent
+- **Proposed** (round 9 layout): a 1120px column with 24px sides. Header with app selector,
+  the one "Data as of" cutoff and the 7d / 28d / 90d picker (it drives Revenue and every
+  delta). A line with "+ Add a card" (adds up to two of New customers, Active customers, Trial
+  conversion, Churn, Realized LTV, removable, in memory only; they go to a second row), then
+  one row of four cards: MRR, Active subscriptions, Active trials, Revenue (4 columns, 2x2 on
+  a tablet, 1 on a phone). **What changed**: four tiles in the same grid, each under its card
+  (icon + tag, a sentence of at most two lines, the action link, and a 28px Rico button that
+  pre-fills the chat with the sentence); below the volume gate four muted tiles. Recent
   transactions (collapsed); footer with the 3 design rules and "Not on this page, and why".
 - **Rico mascot** (round 5): an indigo blob whose eyes are holes in the body, drawn with the
   [bloub](https://github.com/jeremy-prt/bloub) engine (MIT, vendored in `src/vendor/bloub`,
   ported from its Vue component to `BloubRico.tsx`). It floats in the bottom-right corner
   (above the dock on a phone), blinks, lets its gaze drift and follows the pointer. Hover
   gives one small wobble, lights the face up and shows "Ask Rico anything about this page".
-  Drag Rico and dashed "Drop here" spots appear in the other corners; it snaps to the
+  Drag Rico and dashed "Drop here" spots appear in the other corners (a plain gray circle
+  marks where it came from); it snaps to the
   nearest one on release (remembered per browser). Click opens the chat: a floating white
   card that slides in from the right with no sheet behind it (420px, full width on a
   phone), with the live Rico in its header (it turns into bloub's "thinking" dots while
   replying), iMessage-style bubbles with Rico's face beside its own, the 3 suggested prompts
   stacked above the input (a sent one disappears), a typing
-  bubble, and a mocked chat: replies after 600ms, keyed on "new/active customers" (offers
-  "Add card", same logic as (+)), "mrr", "trial", "right/correct/trust", else a default. MRR
-  and trial replies have a button to the chart modal. "Ask Rico why" on a What changed tile
+  bubble, and a mocked chat: chips "Why did MRR go up?", "How is MRR calculated?", "What
+  should I do next?"; replies after 600ms, keyed on "new/active customers" (offers "Add
+  card"), "calculated/definition" (offers "View rows"), "do next/should i do" (offers "Test a
+  new paywall"), "mrr" and "trial" (offer the chart), else a default. "Ask Rico why" on a What changed tile
   pre-fills the chat input with "<card>: <sentence>" (round 8; it used to send it).
 - **New project**, two separate designs with separate data and state:
   - **Today** (round 7): RevenueCat's real onboarding block from `onboarding` in
@@ -60,11 +60,21 @@ Push to `main` deploys to Netlify.
     SDK step, "Open <flow>" (toast stub) and a "Mark done" checkbox that updates the list.
     The 4 cards stay empty ("—", "No data yet") until "Show sample data" is on; then they fill
     with watermarked sample values and the sparklines draw in (600ms, ease-out).
-- **Card** (round 8, lighter): label and (i) definition popover (Active subscriptions adds
-  incl./excl. cancelled counts); big number with a delta chip on the right ("▲ 5.9%", "vs
-  prev 28d" under it; Churn going up is red); a 36px sparkline; one muted window and
-  freshness line. "Open chart / View rows" fade in on hover or focus (always shown on touch
-  devices). Clicking anywhere on the card opens the chart.
+- **Card** (round 9): 200px tall. Label and (i); 36px number with a delta chip on the same
+  line ("▲ 5.9%", "vs prev 28d" under it; Churn going up is red); a 64px sparkline with a 6%
+  wash; one muted line ("In total, now · as of 19:42 UTC", Revenue: "Last 28 full days ·
+  through 13 Oct"). No links on the face: the whole card opens the chart, and an arrow fades in
+  top-right on hover (always shown on touch). The (i) is a trust panel: definition, "Same
+  definition as Charts v3", incl./excl. cancelled for Active subscriptions, and "See the 412
+  subscriptions behind this number →" (rows stub; trials, MRR and Revenue's 1,203
+  transactions get their own wording).
+- **Chart modal** (round 9): metric, definition, period and carried-over cutoff, then an
+  inline SVG chart (no library) of this period (solid indigo, light fill) against the
+  previous one (dashed), three round gridlines, first/middle/last dates, a hover guide with
+  "30 Sep · $4,962 · prev $4,620", a legend, and Start/End/Change (or Previous/This
+  period/Change for period cards) from the data. "View rows (200)" and "Open in Charts →"
+  (toast). Full-screen sheet on a phone. `sparkline_prev` and `prev_value` per period come
+  from the same series as the delta, so the dashed line and the change always agree.
 - **Today**: the "before": Rico bar, 6 plain cards, recent transactions table (unchanged;
   New and Active customers come from `optional_cards` there). New project adds the
   onboarding block on top and shows every card at 0.
@@ -113,11 +123,10 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **New project Now row**: "Show sample data" switch sits left of "Data as of".
 - **Below volume gate**: deltas and sparklines hidden with "Not enough data yet".
 - **Default Rico reply** now says "the numbers on this page" instead of "the six numbers".
-- **Card height** is ~177px at 1280px, not the ~150px target: in a quarter-width card
-  Revenue's line ("Last 28 full days · through 13 Oct · as of 19:42 UTC") needs two lines,
-  and the row keeps one height. With a one-line window the cards come to ~157px.
-- **What changed tiles** carry a `card_id`; the row is laid out with an empty 32px slot where
-  (+) sits above, so each tile shares its card's column exactly.
+- **What changed tiles** carry a `card_id` and share the cards' grid (`src/lib/grid.ts`), so
+  each tile sits exactly under its card.
+- **Round 9 applies to Proposed only.** Today keeps its 1200px page and plain cards.
+- **No clipboard writes** existed in the app code, so E3 needed no change.
 - **"Card swapping / custom layout"** stays in "Not on this page": (+) adds from a fixed list
   of five, it doesn't rearrange or swap the defaults.
 - **Screenshot numbering** follows the briefs: 08 (+) picker, 09 What changed tiles, 10 Today
