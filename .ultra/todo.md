@@ -10,3 +10,11 @@
 ## Next
 - [ ] Write the spec
 - [ ] Swap fake data for the RevenueCat API once a project has real data
+
+## Overview prototype (PRD: rc-home-test/prd/prd-prototype.md, 90 min box)
+- [ ] Scaffold Vite + React + Tailwind v4 + shadcn, mock JSON x3, shell (sidebar, header, toggles)
+- [ ] Card: delta, sparkline, window, freshness, (i) popover
+- [ ] What changed strip + states
+- [ ] Modals (chart stub, rows stub, not-on-this-page) + Today view
+- [ ] Phone width pass
+- [ ] 5 screenshots (Playwright), README, push
