@@ -59,7 +59,7 @@ export default function RicoCanvas({ size }: { size: number }) {
 
     // Jiggle: a damped spring on the squash. Hover and click give it a kick.
     let jx = 0, jv = 0;
-    const kick = () => { jv += 5.5; };
+    const kick = () => { jv += 2.2; }; // was 5.5 in round 4; toned down in round 5
     trigger.addEventListener("pointerenter", kick);
     trigger.addEventListener("pointerdown", kick);
 

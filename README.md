@@ -27,12 +27,15 @@ Push to `main` deploys to Netlify.
   Active customers) with the 7d / 28d / 90d picker; **What changed** strip (max 3, tagged
   Business or Definition / data); Recent transactions (collapsed); footer with the 3 design
   rules and "Not on this page, and why".
-- **Rico mascot** (round 4): an indigo blob with two pill eyes floating in the bottom-right
-  corner (above the dock on a phone), drawn with three.js (lazy-loaded, SVG fallback). It
-  breathes, bobs, blinks and follows the pointer with its eyes; hover or click jiggles it
-  (damped spring) and hover shows "Ask Rico anything about this page". Click opens a 420px
-  right drawer (full width on a phone), styled like iMessage: Rico's avatar and name on top,
-  3 prompt chips, Rico's grey bubbles with its face beside them, your blue bubbles, a typing
+- **Rico mascot** (round 5): an indigo blob whose eyes are holes in the body, drawn with the
+  [bloub](https://github.com/jeremy-prt/bloub) engine (MIT, vendored in `src/vendor/bloub`,
+  ported from its Vue component to `BloubRico.tsx`). It floats in the bottom-right corner
+  (above the dock on a phone), blinks, lets its gaze drift and follows the pointer. Hover
+  gives one small wobble, lights the face up and shows "Ask Rico anything about this page".
+  Click opens a 420px right drawer (full width on a phone): a white chat container with the
+  live Rico floating on its top edge (it switches to bloub's "thinking" state while
+  replying), iMessage-style bubbles with Rico's face beside its own, the 3 suggested prompts
+  stacked above the input (a sent one disappears), a typing
   bubble, and a mocked chat: replies after 600ms, keyed on "mrr", "trial",
   "right/correct/trust", else a default. MRR and trial replies have a button to the chart modal.
 - **New project** (round 2): the setup card lists 6 tasks (2 of 6 done); each opens the same
@@ -77,6 +80,11 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **Rico drawer closes without returning focus** (kept from round 2, when focusing the page
   input reopened the drawer).
 - **iMessage blue** (#0a84ff) is used only inside the chat; the mascot stays page indigo.
+- **Two Ricos in the code**: `RICO_VERSION` in `src/components/Rico.tsx` picks `"bloub"`
+  (round 5, current) or `"blob3d"` (round 4: three.js blob in `RicoCanvas.tsx`, jiggle now
+  toned down). Delete the loser once one is chosen.
+- **Rico's rest face** is bloub's "attentif" (looks straight out) rather than its default
+  "neutre", which looks up and to the side like the x.ai bot; hover switches to "excite".
 - **New project Now row**: "Show sample data" switch sits left of "Data as of".
 - **Below volume gate**: deltas and sparklines hidden with "Not enough data yet".
 - **"Business" tag** is indigo (the page's one accent) rather than a separate blue.

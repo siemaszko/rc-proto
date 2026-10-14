@@ -139,3 +139,19 @@
 @media (prefers-reduced-motion: reduce) {
   .spark-draw { animation: none; }
 }
+
+/* Rico (bloub) on hover: one small wobble, not a jelly shake. */
+@keyframes rico-jiggle {
+  0% { transform: scale(1, 1); }
+  30% { transform: scale(1.04, 0.97); }
+  60% { transform: scale(0.985, 1.015); }
+  100% { transform: scale(1, 1); }
+}
+.rico-jiggle {
+  display: block;
+  transform-origin: 50% 70%;
+  animation: rico-jiggle 420ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rico-jiggle { animation: none; }
+}

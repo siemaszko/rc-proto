@@ -59,7 +59,7 @@ const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
 await page.evaluate(() => window.scrollTo(0, 0));
 // 8. Rico mascot in the corner: hover jiggles it and shows the tooltip.
 const mascot = page.getByRole("button", { name: "Ask Rico", exact: true });
-await mascot.locator("canvas").waitFor();
+await mascot.locator("canvas, svg").first().waitFor();
 await mascot.hover();
 await page.getByText("Ask Rico anything about this page").waitFor();
 await page.waitForTimeout(120);
