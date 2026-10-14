@@ -73,6 +73,7 @@ export default function App() {
   const setDone = (id: string, done = true) => setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, done } : t)));
   const onboarding = data.onboarding && (
     <OnboardingBlock
+      variant={view}
       data={data.onboarding}
       tasks={tasks}
       onDone={(id) => setDone(id)}
