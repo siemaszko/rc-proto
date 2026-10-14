@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUp } from "lucide-react";
+import { ArrowRight, ArrowUp, XIcon } from "lucide-react";
 import { RicoAvatar, RicoLive } from "@/components/Rico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 // One right-side drawer for Rico and for setup tasks: 420px, full width on a phone.
 export function SideDrawer({
-  open, onOpenChange, initialFocus, returnFocus = true, className, children,
-}: { open: boolean; onOpenChange: (o: boolean) => void; initialFocus?: React.RefObject<HTMLElement | null>; returnFocus?: boolean; className?: string; children: React.ReactNode }) {
+  open, onOpenChange, initialFocus, returnFocus = true, showCloseButton = true, className, children,
+}: {
+  open: boolean; onOpenChange: (o: boolean) => void; initialFocus?: React.RefObject<HTMLElement | null>;
+  returnFocus?: boolean; showCloseButton?: boolean; className?: string; children: React.ReactNode;
+}) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" initialFocus={initialFocus} finalFocus={returnFocus} className={cn("gap-0 bg-white data-[side=right]:w-full data-[side=right]:sm:max-w-[420px]", className)}>
+      <SheetContent side="right" initialFocus={initialFocus} finalFocus={returnFocus} showCloseButton={showCloseButton} className={cn("gap-0 bg-white data-[side=right]:w-full data-[side=right]:sm:max-w-[420px]", className)}>
         {children}
       </SheetContent>
     </Sheet>
@@ -65,14 +68,19 @@ export function RicoDrawer({
   const lastOfRun = (i: number) => messages[i + 1]?.from !== messages[i].from && !(typing && i === messages.length - 1 && messages[i].from === "rico");
 
   return (
-    <SideDrawer open={open} onOpenChange={onOpenChange} initialFocus={inputRef} returnFocus={false} className="bg-neutral-100">
-      {/* The white chat container, with Rico floating on its top edge. */}
-      <div className="relative mx-3 mt-16 mb-3 flex min-h-0 flex-1 flex-col rounded-[20px] bg-white shadow-sm ring-1 ring-neutral-200/70">
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2">
-          <RicoLive size={96} thinking={typing} />
-        </div>
-        <div className="border-b border-neutral-100 pt-9 pb-2 text-center">
-          <SheetTitle className="text-xs font-medium text-neutral-900">Rico</SheetTitle>
+    // No sheet behind the chat: the sheet is transparent and only the white chat card slides in.
+    <SideDrawer
+      open={open} onOpenChange={onOpenChange} initialFocus={inputRef} returnFocus={false} showCloseButton={false}
+      className="bg-transparent p-2 shadow-none data-[side=right]:border-l-0 sm:p-3"
+    >
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl shadow-neutral-900/20 ring-1 ring-black/5">
+        <SheetClose render={<Button variant="ghost" size="icon-sm" className="absolute top-2.5 right-2.5" />}>
+          <XIcon />
+          <span className="sr-only">Close</span>
+        </SheetClose>
+        <div className="flex flex-col items-center border-b border-neutral-100 pt-3 pb-2 text-center">
+          <RicoLive size={76} thinking={typing} />
+          <SheetTitle className="-mt-2 text-xs font-medium text-neutral-900">Rico</SheetTitle>
           <SheetDescription className="text-[11px] text-neutral-400">{typing ? "Thinking…" : "Answers about this page"}</SheetDescription>
         </div>
 

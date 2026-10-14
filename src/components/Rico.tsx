@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { BloubRico } from "@/components/BloubRico";
 import { RICO_EYES, ricoPath } from "@/lib/rico-shape";
+import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Which Rico the page uses. "bloub" (round 5) is the bloub engine; "blob3d" (round 4) is the
@@ -49,29 +50,146 @@ export function RicoLive({ size, thinking, happy }: { size: number; thinking?: b
   return <BloubRico size={size} follow state={thinking ? "thinking" : "idle"} expression={happy ? "excite" : "attentif"} />;
 }
 
-// Floating bottom-right launcher: animated Rico, tooltip on hover, click opens the chat.
+type Corner = "br" | "bl" | "tr" | "tl";
+const CORNERS: Corner[] = ["br", "bl", "tr", "tl"];
+// Where Rico can sit. Bottom corners clear the prototype dock on a phone; left corners clear
+// the sidebar on desktop; top corners clear the phone top bar.
+const CORNER_CLASS: Record<Corner, string> = {
+  br: "right-1 bottom-20 md:right-3 md:bottom-2",
+  bl: "left-1 bottom-20 md:left-[228px] md:bottom-2",
+  tr: "right-1 top-12 md:right-3 md:top-2",
+  tl: "left-1 top-12 md:left-[228px] md:top-2",
+};
+const CORNER_KEY = "rico-corner";
+const DRAG_START = 6; // px of movement before a press becomes a drag
+
+function savedCorner(): Corner {
+  try {
+    const c = localStorage.getItem(CORNER_KEY) as Corner | null;
+    return c && CORNERS.includes(c) ? c : "br";
+  } catch {
+    return "br";
+  }
+}
+
+// Floating launcher: animated Rico in a corner, tooltip on hover, click opens the chat.
+// Drag it and the other corners show drop spots; it snaps to the nearest one on release.
 export function RicoLauncher({ onOpen }: { onOpen: () => void }) {
   const bloub = RICO_VERSION === "bloub";
   const size = bloub ? 96 : 72; // bloub's body fills ~63% of its box
+  const [corner, setCorner] = useState<Corner>(savedCorner);
   const [hover, setHover] = useState(false);
   const [jiggle, setJiggle] = useState(false);
+  // While dragging: Rico's box top-left in viewport px, and the corner it would land in.
+  const [drag, setDrag] = useState<{ x: number; y: number; target: Corner } | null>(null);
+  // After release: glide to the drop spot, then hand back to the corner classes.
+  const [landing, setLanding] = useState<{ x: number; y: number; corner: Corner } | null>(null);
+  const justDragged = useRef(false);
+  const spots = useRef<Partial<Record<Corner, HTMLDivElement | null>>>({});
+
+  const nearest = (cx: number, cy: number): Corner => {
+    let best: Corner = corner, bestD = Infinity;
+    for (const c of CORNERS) {
+      const r = spots.current[c]?.getBoundingClientRect();
+      if (!r) continue;
+      const d = Math.hypot(r.left + r.width / 2 - cx, r.top + r.height / 2 - cy);
+      if (d < bestD) { best = c; bestD = d; }
+    }
+    return best;
+  };
+
+  // Press is heard in the capture phase (the tooltip trigger may stop it bubbling); move and
+  // release on window, since a quick flick leaves Rico's box on the very first move.
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const p = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, dragged: false };
+    let last: { x: number; y: number } | null = null;
+
+    const move = (ev: PointerEvent) => {
+      if (!p.dragged && Math.hypot(ev.clientX - p.x, ev.clientY - p.y) < DRAG_START) return;
+      p.dragged = true;
+      ev.preventDefault();
+      last = { x: ev.clientX - p.dx, y: ev.clientY - p.dy };
+      setHover(false);
+      setDrag({ ...last, target: nearest(ev.clientX, ev.clientY) });
+    };
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      if (!p.dragged || !last) return;
+      // The click that may follow this release is not a click.
+      justDragged.current = true;
+      setTimeout(() => { justDragged.current = false; }, 0);
+      const to = nearest(ev.clientX, ev.clientY);
+      const spot = spots.current[to]?.getBoundingClientRect();
+      setDrag(null);
+      // Already there (no transition would fire): land straight away.
+      if (spot && Math.hypot(spot.left - last.x, spot.top - last.y) > 1) setLanding({ x: spot.left, y: spot.top, corner: to });
+      else settle(to);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+  const settle = (to: Corner) => {
+    setCorner(to);
+    try { localStorage.setItem(CORNER_KEY, to); } catch { /* per-viewer nicety only */ }
+    setLanding(null);
+  };
+  // left and top each end a transition; the second call finds landing already cleared.
+  const land = () => { if (landing) settle(landing.corner); };
+  const onClick = () => { if (!justDragged.current) onOpen(); };
+
+  const free = drag ?? landing;
+  const left = corner === "bl" || corner === "tl";
   return (
-    <div className={bloub ? "fixed right-1 bottom-20 z-40 md:right-3 md:bottom-2" : "fixed right-4 bottom-24 z-40 md:right-6 md:bottom-6"}>
-      <Tooltip>
-        <TooltipTrigger
-          render={<button onClick={onOpen} aria-label="Ask Rico" />}
-          onPointerEnter={() => { setHover(true); setJiggle(true); }}
-          onPointerLeave={() => setHover(false)}
-          className="group relative grid place-items-center rounded-full outline-none focus-visible:ring-3 focus-visible:ring-indigo-300"
+    <>
+      {/* Drop spots: always mounted so they can be measured, shown in the other corners while
+          dragging. Rico's own corner stays invisible but still counts, so letting go near it
+          puts Rico back. */}
+      {CORNERS.map((c) => (
+        <div
+          key={c}
+          ref={(el) => { spots.current[c] = el; }}
+          aria-hidden
+          className={cn("pointer-events-none fixed z-40 grid place-items-center", CORNER_CLASS[c], (!drag || c === corner) && "invisible")}
+          style={{ width: size, height: size }}
         >
-          <span aria-hidden className={bloub ? "absolute bottom-3 h-2 w-12 rounded-full bg-neutral-900/15 blur-[3px]" : "absolute bottom-1 h-2 w-10 rounded-full bg-neutral-900/15 blur-[3px]"} />
-          {/* The three.js blob jiggles itself; bloub gets one small CSS wobble per hover. */}
-          <span className={bloub && jiggle ? "rico-jiggle" : "block"} onAnimationEnd={() => setJiggle(false)}>
-            <RicoLive size={size} happy={hover} />
+          <span
+            className={cn(
+              "grid size-[62%] place-items-center rounded-full border-2 border-dashed text-center text-[10px] leading-tight font-medium transition-all duration-150",
+              drag?.target === c ? "scale-110 border-indigo-500 bg-indigo-100/80 text-indigo-700" : "border-indigo-300 bg-white/70 text-indigo-400",
+            )}
+          >
+            Drop<br />here
           </span>
-        </TooltipTrigger>
-        <TooltipContent side="left" sideOffset={bloub ? -6 : 4}>Ask Rico anything about this page</TooltipContent>
-      </Tooltip>
-    </div>
+        </div>
+      ))}
+
+      <div
+        className={cn("fixed", free ? "z-50" : "z-40", !free && CORNER_CLASS[corner], landing && "transition-[left,top] duration-300 ease-out")}
+        style={free ? { left: free.x, top: free.y } : undefined}
+        onTransitionEnd={(e) => e.target === e.currentTarget && land()}
+        onPointerDownCapture={onPointerDown}
+      >
+        <Tooltip open={hover && !free} onOpenChange={(o) => !o && setHover(false)}>
+          <TooltipTrigger
+            render={<button onClick={onClick} aria-label="Ask Rico" />}
+            onPointerEnter={() => { if (!free) { setHover(true); setJiggle(true); } }}
+            onPointerLeave={() => setHover(false)}
+            className={cn("group relative grid touch-none place-items-center rounded-full outline-none select-none focus-visible:ring-3 focus-visible:ring-indigo-300", drag ? "cursor-grabbing" : "cursor-grab")}
+          >
+            <span aria-hidden className={cn("absolute rounded-full bg-neutral-900/15 blur-[3px] transition-all", bloub ? "bottom-3 h-2 w-12" : "bottom-1 h-2 w-10", drag && "bottom-0 w-8 opacity-60")} />
+            {/* The three.js blob jiggles itself; bloub gets one small CSS wobble per hover. */}
+            <span className={cn(bloub && jiggle ? "rico-jiggle" : "block", drag && "scale-105")} onAnimationEnd={() => setJiggle(false)}>
+              <RicoLive size={size} happy={hover || !!drag} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side={left ? "right" : "left"} sideOffset={bloub ? -6 : 4}>Ask Rico anything about this page</TooltipContent>
+        </Tooltip>
+      </div>
+    </>
   );
 }

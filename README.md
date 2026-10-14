@@ -13,7 +13,7 @@ npm install
 npm run dev                 # http://localhost:5173
 npm run build               # static build into dist/ (what Netlify serves)
 node scripts/gen-data.mjs   # regenerate the mock JSON (fixed seeds, deterministic)
-npm run screenshots         # screenshots 01-08 into screenshots/, plus click-through checks (needs dev server + Chrome)
+npm run screenshots         # screenshots 01-09 into screenshots/, plus click-through checks (needs dev server + Chrome)
 ```
 
 Push to `main` deploys to Netlify.
@@ -32,8 +32,10 @@ Push to `main` deploys to Netlify.
   ported from its Vue component to `BloubRico.tsx`). It floats in the bottom-right corner
   (above the dock on a phone), blinks, lets its gaze drift and follows the pointer. Hover
   gives one small wobble, lights the face up and shows "Ask Rico anything about this page".
-  Click opens a 420px right drawer (full width on a phone): a white chat container with the
-  live Rico floating on its top edge (it switches to bloub's "thinking" state while
+  Drag Rico and dashed "Drop here" spots appear in the other corners; it snaps to the
+  nearest one on release (remembered per browser). Click opens the chat: a floating white
+  card that slides in from the right with no sheet behind it (420px, full width on a
+  phone), with the live Rico in its header (it turns into bloub's "thinking" dots while
   replying), iMessage-style bubbles with Rico's face beside its own, the 3 suggested prompts
   stacked above the input (a sent one disappears), a typing
   bubble, and a mocked chat: replies after 600ms, keyed on "mrr", "trial",

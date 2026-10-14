@@ -1,4 +1,4 @@
-// Takes the PRD screenshots (01-05), the drawers (06-07) and the Rico mascot (08) into ./screenshots. Needs the dev server: npm run dev
+// Takes the PRD screenshots (01-05), the drawers (06-07) and the Rico mascot (08) and its drag (09) into ./screenshots. Needs the dev server: npm run dev
 // Usage: node scripts/screenshots.mjs [url]
 import { chromium } from "playwright";
 
@@ -110,6 +110,25 @@ await setState("Normal");
 await page.getByRole("button", { name: "Not on this page, and why →" }).click();
 await page.getByRole("dialog").waitFor();
 await page.keyboard.press("Escape");
+
+// 9. Drag Rico to another corner: drop spots appear, it snaps to the nearest one.
+{
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400); // let the last dialog's overlay finish closing
+  const r = await mascot.boundingBox();
+  await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+  await page.mouse.down();
+  for (let i = 1; i <= 12; i++) await page.mouse.move(r.x + r.width / 2 - i * 70, r.y + r.height / 2 - i * 55);
+  await page.waitForTimeout(150);
+  await shot("09-rico-drag.png");
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+  const after = await mascot.boundingBox();
+  check(after.x < 400 && after.y < 120, `Rico snapped to the top-left corner (${Math.round(after.x)},${Math.round(after.y)})`);
+  await mascot.click();
+  await page.locator("[data-slot=sheet-content]").waitFor();
+  await page.keyboard.press("Escape");
+}
 
 // 5. Phone
 const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
