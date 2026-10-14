@@ -1,5 +1,5 @@
 // Takes the PRD screenshots (01-05), the drawers (06-07), the (+) picker (08), What changed
-// tiles (09), the Rico mascot (10) and its drag (11) into ./screenshots. Needs the dev server: npm run dev
+// tiles (09), Today in New project (10), the Rico mascot (12) and its drag (13) into ./screenshots. Needs the dev server: npm run dev
 // Usage: node scripts/screenshots.mjs [url]
 import { chromium } from "playwright";
 
@@ -112,14 +112,14 @@ const setState = async (state) => {
 };
 // 7. Rico drawer: a chip, a typed question, mocked replies.
 await page.evaluate(() => window.scrollTo(0, 0));
-// 10. Rico mascot in the corner: hover jiggles it and shows the tooltip.
+// 12. Rico mascot in the corner: hover jiggles it and shows the tooltip.
 const mascot = page.getByRole("button", { name: "Ask Rico", exact: true });
 await mascot.locator("canvas, svg").first().waitFor();
 await mascot.hover();
 await page.getByText("Ask Rico anything about this page").waitFor();
 await page.waitForTimeout(120);
 const m = await mascot.boundingBox();
-await shot("10-rico-mascot-hover.png", { clip: { x: m.x - 260, y: m.y - 40, width: m.width + 284, height: m.height + 64 } });
+await shot("12-rico-mascot-hover.png", { clip: { x: m.x - 260, y: m.y - 40, width: m.width + 284, height: m.height + 64 } });
 await mascot.click();
 const drawer = page.locator("[data-slot=sheet-content]");
 await drawer.waitFor();
@@ -152,22 +152,42 @@ check((await page.getByText("No data yet").count()) === 0, "sample data fills th
 await shot("state-new-project-sample.png", { fullPage: true });
 await page.getByRole("switch").click();
 
-// 6. Setup task drawer
-await page.getByRole("button", { name: "Install the SDK and configure Purchases" }).click();
+// 6. New project, Proposed: onboarding block; a task opens the drawer; Mark as done counts.
+const onboarding = page.getByRole("region", { name: "Onboarding" });
+check((await onboarding.getByRole("article").count()) === 4, "4 open onboarding tasks");
+await onboarding.getByText("(2 of 6)").waitFor();
+await onboarding.getByRole("button", { name: "Install SDK" }).click();
 await drawer.waitFor();
 await page.waitForTimeout(250);
 await shot("06-new-project-setup-drawer.png");
-await drawer.getByRole("button", { name: /^Open / }).click();
-await page.getByText("Would open API keys").waitFor();
+await drawer.getByRole("button", { name: /Install SDK/ }).click();
+await page.getByText("Would open SDK installation").waitFor();
 await drawer.getByRole("checkbox").click();
 await page.keyboard.press("Escape");
-await page.getByText("3 of 6 done").waitFor();
+await onboarding.getByText("(3 of 6)").waitFor();
+check((await onboarding.getByRole("article").count()) === 3, "done task leaves the carousel");
+await onboarding.getByRole("button", { name: "Show completed" }).click();
+check((await onboarding.getByRole("article").count()) === 6, "Show completed reveals all 6");
+await onboarding.getByRole("button", { name: "Hide completed" }).click();
+await onboarding.getByRole("button", { name: "Mark as done" }).first().click();
+await onboarding.getByText("(4 of 6)").waitFor();
+
+// 10. Today, New project: the faithful "before" (onboarding block, Rico bar, 6 cards at 0).
+await page.getByRole("tab", { name: "Today" }).click();
+await page.waitForTimeout(300);
+await page.getByRole("region", { name: "Onboarding" }).getByText("(4 of 6)").waitFor(); // same tasks as Proposed
+await page.getByText("No live transactions to show").waitFor();
+await page.getByRole("region", { name: "Onboarding" }).getByRole("button", { name: "Configure sandbox access" }).click();
+await page.getByText("Would open Sandbox access").waitFor();
+await page.waitForTimeout(4500); // let the toast go before the screenshot
+await shot("10-today-new-project.png", { fullPage: true });
+await page.getByRole("tab", { name: "Proposed" }).click();
 await setState("Normal");
 await page.getByRole("button", { name: "Not on this page, and why →" }).click();
 await page.getByRole("dialog").waitFor();
 await page.keyboard.press("Escape");
 
-// 11. Drag Rico to another corner: drop spots appear, it snaps to the nearest one.
+// 13. Drag Rico to another corner: drop spots appear, it snaps to the nearest one.
 {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(400); // let the last dialog's overlay finish closing
@@ -176,7 +196,7 @@ await page.keyboard.press("Escape");
   await page.mouse.down();
   for (let i = 1; i <= 12; i++) await page.mouse.move(r.x + r.width / 2 - i * 70, r.y + r.height / 2 - i * 55);
   await page.waitForTimeout(150);
-  await shot("11-rico-drag.png");
+  await shot("13-rico-drag.png");
   await page.mouse.up();
   await page.waitForTimeout(500);
   const after = await mascot.boundingBox();
@@ -191,9 +211,15 @@ const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, dev
 phone.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 await phone.goto(TARGET, { waitUntil: "networkidle" });
 await phone.evaluate(() => document.fonts.ready);
-await phone.screenshot({ path: OUT + "05-phone.png" });
-const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+let overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 await phone.screenshot({ path: OUT + "phone-full.png", fullPage: true });
+// 05: New project on a phone, onboarding tasks stacked (no carousel).
+await phone.getByRole("combobox").filter({ hasText: /Normal|Below volume gate|New project/ }).click();
+await phone.getByRole("option", { name: "New project" }).click();
+await phone.waitForTimeout(300);
+await phone.screenshot({ path: OUT + "05-phone.png" });
+await phone.screenshot({ path: OUT + "phone-new-project-full.png", fullPage: true });
+overflow = Math.max(overflow, await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth));
 await phone.getByRole("button", { name: "Ask Rico", exact: true }).click();
 const phoneDrawer = await phone.locator("[data-slot=sheet-content]").boundingBox();
 check(Math.round(phoneDrawer.width) === 390, `phone drawer full width (${phoneDrawer.width}px)`);

@@ -12,9 +12,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sidebar, TopBar } from "@/components/Shell";
 import { MetricCard, PlainCard } from "@/components/MetricCard";
-import { DesignRules, RecentTransactions, RicoBar, SetupChecklist, WhatChanged } from "@/components/Sections";
+import { DesignRules, RecentTransactions, RicoBar, WhatChanged } from "@/components/Sections";
+import { OnboardingBlock } from "@/components/Onboarding";
 import { AddCard, MAX_EXTRA, OPTIONAL_CARDS, type OptionalCardId } from "@/components/AddCard";
-import { RicoDrawer, SetupDrawer } from "@/components/Drawers";
+import { RicoDrawer, TaskDrawer } from "@/components/Drawers";
 import { RicoLauncher } from "@/components/Rico";
 import { ChartModal, ExperimentModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
 import { dateTimeUtc, formatValue, fullDaysLabel, periodLabel } from "@/lib/format";
@@ -46,9 +47,10 @@ export default function App() {
   const [ricoOpen, setRicoOpen] = useState(false);
   const [ricoDraft, setRicoDraft] = useState("");
   const [showSample, setShowSample] = useState(false);
-  const [setupSteps, setSetupSteps] = useState(DATA.new_project.setup!.steps);
-  const [setupIndex, setSetupIndex] = useState(0);
-  const [setupOpen, setSetupOpen] = useState(false);
+  // Onboarding tasks: one copy shared by Today and Proposed, so "Mark as done" shows in both.
+  const [tasks, setTasks] = useState(DATA.new_project.onboarding!.tasks);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [taskOpen, setTaskOpen] = useState(false);
 
   const data = DATA[stateKey];
   const sample = Boolean(data.sample);
@@ -67,6 +69,19 @@ export default function App() {
   };
   const openChart = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setChartOpen(true); };
   const openRows = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setRowsOpen(true); };
+
+  const setDone = (id: string, done = true) => setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, done } : t)));
+  const onboarding = data.onboarding && (
+    <OnboardingBlock
+      data={data.onboarding}
+      tasks={tasks}
+      onDone={(id) => setDone(id)}
+      onAllDone={() => setTasks((ts) => ts.map((t) => ({ ...t, done: true })))}
+      onFlow={(flow) => toast(`Would open ${flow}`)}
+      onOpenTask={view === "proposed" ? (t) => { setTaskId(t.id); setTaskOpen(true); } : undefined}
+    />
+  );
+  const taskIndex = tasks.findIndex((t) => t.id === taskId);
 
   // (+) and Rico's "Add card" share this: no duplicates, at most MAX_EXTRA.
   const addCard = (id: OptionalCardId) => {
@@ -153,17 +168,18 @@ export default function App() {
 
             {view === "today" ? (
               <>
+                {onboarding}
                 <RicoBar placeholder="Ask about insights or growth opportunities for your apps" />
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   {TODAY_ORDER.map((id) => allCards.find((c) => c.id === id)!).map((c) => (
-                    <PlainCard key={c.id} card={c} onOpenChart={() => openChart(c)} />
+                    <PlainCard key={c.id} card={c} zero={sample} onOpenChart={() => openChart(c)} />
                   ))}
                 </div>
                 <RecentTransactions rows={data.recent_transactions} collapsible={false} />
               </>
             ) : (
               <>
-                {data.setup && <SetupChecklist steps={setupSteps} onOpenStep={(i) => { setSetupIndex(i); setSetupOpen(true); }} />}
+                {onboarding}
 
                 {/* Four default cards in one row, extras from (+) after them; (+) at the row's end. */}
                 <section aria-label="Key numbers" className="flex flex-col gap-3">
@@ -231,13 +247,13 @@ export default function App() {
         onAddCard={(id) => { setRicoOpen(false); addCard(id); }}
         ask={ricoAsk}
       />
-      <SetupDrawer
-        step={setupSteps[setupIndex]}
-        index={setupIndex}
-        total={setupSteps.length}
-        open={setupOpen}
-        onOpenChange={setSetupOpen}
-        onToggleDone={(done) => setSetupSteps((steps) => steps.map((s, i) => (i === setupIndex ? { ...s, done } : s)))}
+      <TaskDrawer
+        task={taskIndex >= 0 ? tasks[taskIndex] : null}
+        index={taskIndex}
+        total={tasks.length}
+        open={taskOpen}
+        onOpenChange={setTaskOpen}
+        onToggleDone={(done) => taskId && setDone(taskId, done)}
       />
       <Toaster position="bottom-center" />
     </TooltipProvider>

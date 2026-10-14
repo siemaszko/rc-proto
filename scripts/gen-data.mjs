@@ -217,15 +217,30 @@ const newProject = file("new_project", scenario(1234, {
   what_changed: [],
   volume_gate: { threshold_tx_per_week: 10, current: 0 },
   recent_transactions: [],
-  setup: {
-    done: 2,
-    steps: [
-      { label: "Create a project", done: true },
-      { label: "Add your app", done: true },
-      { label: "Install the SDK and configure Purchases", done: false },
-      { label: "Add products and an entitlement", done: false },
-      { label: "Make a sandbox purchase", done: false },
-      { label: "Connect App Store Server Notifications", done: false },
+  // RevenueCat's onboarding block on an empty project, as seen on 14 Oct. Read by both views.
+  // primary / secondary: { label, flow } where flow names what the stub toast would open.
+  onboarding: {
+    title: "Let's get you ready to start using RevenueCat.",
+    subtitle: "There are a few more things required before you can start selling inside your app.",
+    tasks: [
+      { id: "products", title: "Set up products", done: true,
+        description: "Review your app's products configuration, or customize products, entitlements, and offerings as needed.",
+        primary: { label: "Open product catalog", flow: "Product catalog" }, secondary: null, info: null },
+      { id: "paywall", title: "Create your first paywall", done: true,
+        description: "Set up a paywall to start selling in your app. Use RevenueCat's visual editor to design a paywall, or build your own using our docs.",
+        primary: { label: "New paywall", flow: "Paywall editor" }, secondary: { label: "Code it", flow: "Paywall docs" }, info: null },
+      { id: "sdk", title: "Integrate the SDK", done: false,
+        description: "Add RevenueCat to your app. Copy your API key, use the sample code, or set up with AI prompts.",
+        primary: { label: "Install SDK", flow: "SDK installation" }, secondary: null, info: "Supports iOS, Android, Flutter, React Native, Unity and web." },
+      { id: "purchase", title: "Make your first purchase", done: false,
+        description: "Test your setup by making a purchase in your app. Tap the purchase button on your Paywall or trigger a purchase directly in code.",
+        primary: { label: "Present a Paywall", flow: "Paywall presentation guide" }, secondary: { label: "Purchase in code", flow: "Purchase code sample" }, info: null },
+      { id: "sandbox", title: "Secure your sandbox access", done: false,
+        description: "Test Store purchases run in a sandbox. The sandbox allow list lets you control who can make test purchases and helps keep entitlements and in-app currencies secure.",
+        primary: { label: "Configure sandbox access", flow: "Sandbox access" }, secondary: null, info: "Only people on the allow list can make test purchases." },
+      { id: "config", title: "Create a real app configuration", done: false,
+        description: "Your app is connected to the Test Store. Before uploading, add a real App Store or Play Store configuration and use its API key in production so RevenueCat can process live purchases.",
+        primary: { label: "Add configuration", flow: "App configuration" }, secondary: { label: "Learn more", flow: "Store configuration docs" }, info: null },
     ],
   },
 });

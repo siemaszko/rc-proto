@@ -13,7 +13,7 @@ npm install
 npm run dev                 # http://localhost:5173
 npm run build               # static build into dist/ (what Netlify serves)
 node scripts/gen-data.mjs   # regenerate the mock JSON (fixed seeds, deterministic)
-npm run screenshots         # screenshots 01-11 into screenshots/, plus click-through checks (needs dev server + Chrome)
+npm run screenshots         # screenshots 01-13 into screenshots/, plus click-through checks (needs dev server + Chrome)
 ```
 
 Push to `main` deploys to Netlify.
@@ -46,17 +46,23 @@ Push to `main` deploys to Netlify.
   "Add card", same logic as (+)), "mrr", "trial", "right/correct/trust", else a default. MRR
   and trial replies have a button to the chart modal. "Ask Rico why" on a What changed tile
   opens the chat with the tile's sentence as your message.
-- **New project** (round 2): the setup card lists 6 tasks (2 of 6 done); each opens the same
-  drawer with numbered steps, a code snippet for the SDK step, "Open <flow>" (toast stub) and
-  a "Mark done" checkbox that updates the card. Cards are empty ("—", "No data yet") until
-  the "Show sample data" switch next to Now is on; then they fill with watermarked sample
-  values and the sparklines draw in (600ms, ease-out).
+- **New project** (round 7): both views open with RevenueCat's real onboarding block, from
+  `onboarding` in new_project.json: progress ring, "Let's get you ready… (2 of 6)", "Mark all
+  as done", "Show completed" / "Hide completed", and a snap-scrolling carousel of the open
+  tasks (stacked on a phone). Illustrations are neutral placeholders with one lucide icon.
+  "Mark as done" moves a task to completed in both views (one shared state). In **Today**
+  the buttons are toasts ("Would open <flow>"), followed by the old Rico bar, the 6 cards at
+  0 and "No live transactions to show": the faithful before. In **Proposed** the title and
+  primary button open the task drawer (steps, a code snippet for the SDK, the flow button,
+  "Mark as done"); below it the 4 cards stay empty until "Show sample data" is on, and the
+  sparklines then draw in (600ms, ease-out).
 - **Card**: label, (i) definition popover (Active subscriptions adds incl./excl. cancelled
   counts), big number, delta vs previous period (Churn going up is red),
   28-point sparkline in the delta color, window and freshness line, Open chart / View rows.
   Clicking anywhere on the card opens the chart.
 - **Today**: the "before": Rico bar, 6 plain cards, recent transactions table (unchanged;
-  New and Active customers come from `optional_cards` there).
+  New and Active customers come from `optional_cards` there). New project adds the
+  onboarding block on top and shows every card at 0.
 
 Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primitives
 (`base-nova` style), lucide-react, inline SVG sparklines. Mock data in `src/data/*.json`.
@@ -104,8 +110,12 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **Default Rico reply** now says "the numbers on this page" instead of "the six numbers".
 - **"Card swapping / custom layout"** stays in "Not on this page": (+) adds from a fixed list
   of five, it doesn't rearrange or swap the defaults.
-- **Screenshots 08 and 09** are the (+) picker and the What changed tiles (round 6 brief);
-  the Rico mascot and drag shots moved to 10 and 11.
+- **Screenshot numbering** follows the briefs: 08 (+) picker, 09 What changed tiles, 10 Today
+  in New project; the Rico mascot and drag shots moved to 12 and 13. 05 is now the phone in
+  New project (onboarding stacked); the Normal phone page is `phone-full.png`.
+- **Onboarding task card layout**: at three cards per row (1280px) a 150px illustration
+  beside the whole text column leaves ~130px for text, so the title sits beside the
+  illustration and the description and buttons run full width under it.
 - **"Business" tag** is indigo (the page's one accent) rather than a separate blue.
 - **Dialog backdrop blur removed** so the What changed strip stays readable behind the
   chart modal in screenshot 4.

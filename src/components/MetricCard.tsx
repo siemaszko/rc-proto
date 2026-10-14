@@ -151,7 +151,8 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
   );
 }
 
-export function PlainCard({ card, onOpenChart }: { card: CardData; onOpenChart: () => void }) {
+// Today's card. `zero`: a new project, where today's page shows every number at 0.
+export function PlainCard({ card, zero, onOpenChart }: { card: CardData; zero?: boolean; onOpenChart: () => void }) {
   return (
     <Card
       role="button"
@@ -161,7 +162,7 @@ export function PlainCard({ card, onOpenChart }: { card: CardData; onOpenChart: 
       className="cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-4 shadow-none ring-0 hover:border-neutral-300"
     >
       <span className="text-[13px] font-medium tracking-wide text-neutral-500 uppercase">{card.label}</span>
-      <span className="mt-2 text-[28px] leading-none font-semibold text-neutral-900 tabular-nums">{formatValue(card.value, card.unit)}</span>
+      <span className="mt-2 text-[28px] leading-none font-semibold text-neutral-900 tabular-nums">{formatValue(zero ? 0 : card.value, card.unit)}</span>
       <span className="mt-2 text-xs text-neutral-400">{card.row === "now" ? "In total" : "Last 28 days"}</span>
     </Card>
   );

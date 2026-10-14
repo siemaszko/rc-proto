@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowUp, Plus, XIcon } from "lucide-react";
 import type { OptionalCardId } from "@/components/AddCard";
+import type { OnboardingTask } from "@/types";
 import { RicoAvatar, RicoLive } from "@/components/Rico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-// One right-side drawer for Rico and for setup tasks: 420px, full width on a phone.
+// One right-side drawer for Rico and for onboarding tasks: 420px, full width on a phone.
 export function SideDrawer({
   open, onOpenChange, initialFocus, returnFocus = true, showCloseButton = true, className, children,
 }: {
@@ -184,55 +185,41 @@ function Bubble({ me, tail, children }: { me: boolean; tail: boolean; children: 
   );
 }
 
-/* ---------- Setup tasks ---------- */
+/* ---------- Onboarding tasks ---------- */
 
-type Guide = { flow: string; steps: string[]; snippet?: string };
-
-// Keyed by the step label in new_project.json. Mock text, no real docs.
-export const SETUP_GUIDES: Record<string, Guide> = {
-  "Create a project": {
-    flow: "Project settings",
-    steps: ["Name the project after your app or company.", "Invite anyone who should see revenue.", "Pick the currency your reports use."],
-  },
-  "Add your app": {
-    flow: "App settings",
-    steps: ["Choose the store: App Store, Play Store, or web.", "Enter the bundle ID exactly as in the store.", "Upload the store credentials so purchases can be validated."],
-  },
-  "Install the SDK and configure Purchases": {
-    flow: "API keys",
+// Instructions per onboarding task id, for the Proposed view's drawer. Mock text, no real docs.
+export const TASK_GUIDES: Record<string, { steps: string[]; snippet?: string }> = {
+  products: { steps: ["Open the product catalog.", "Check the products imported from your store.", "Attach them to an entitlement, e.g. \"pro\".", "Group them in an offering for your paywall."] },
+  paywall: { steps: ["Pick a template in the visual editor.", "Choose the offering it should sell.", "Adjust copy and colours, then publish."] },
+  sdk: {
     steps: ["Add the Purchases package to your app.", "Copy the public API key for this app.", "Configure Purchases once, at app launch.", "Run the app and check the debug log for a customer ID."],
     snippet: `// Package.swift or Xcode: add purchases-ios
 import RevenueCat
 
-Purchases.configure(withAPIKey: "appl_XXXXXXXX")`,
+Purchases.configure(withAPIKey: "test_XXXXXXXX")`,
   },
-  "Add products and an entitlement": {
-    flow: "Product catalog",
-    steps: ["Import the products you created in the store.", "Create an entitlement, e.g. \"pro\".", "Attach every product that unlocks it.", "Group them in an offering for your paywall."],
-  },
-  "Make a sandbox purchase": {
-    flow: "Sandbox testing",
-    steps: ["Sign in with a sandbox tester on a device.", "Buy any product from your paywall.", "Find the purchase in Customers within a minute."],
-  },
-  "Connect App Store Server Notifications": {
-    flow: "Integrations",
-    steps: ["Copy the notification URL for this app.", "Paste it in App Store Connect under App Information.", "Send a test notification and wait for the green check."],
-  },
+  purchase: { steps: ["Present your paywall, or call purchase(package:) in code.", "Buy any product with a Test Store account.", "Find the purchase under Customers within a minute."] },
+  sandbox: { steps: ["Open Sandbox access in project settings.", "Add the emails or customer IDs allowed to test.", "Save; everyone else gets a clear error on test purchases."] },
+  config: { steps: ["Add an App Store or Play Store configuration.", "Upload the store credentials.", "Swap the Test Store key for the new API key before you ship."] },
 };
 
-export function SetupDrawer({
-  step, index, total, open, onOpenChange, onToggleDone,
-}: { step: { label: string; done: boolean } | null; index: number; total: number; open: boolean; onOpenChange: (o: boolean) => void; onToggleDone: (done: boolean) => void }) {
-  const guide = step && SETUP_GUIDES[step.label];
+export function TaskDrawer({
+  task, index, total, open, onOpenChange, onToggleDone,
+}: {
+  task: OnboardingTask | null; index: number; total: number;
+  open: boolean; onOpenChange: (o: boolean) => void; onToggleDone: (done: boolean) => void;
+}) {
+  const guide = task && TASK_GUIDES[task.id];
   return (
     <SideDrawer open={open} onOpenChange={onOpenChange}>
-      {step && guide && (
+      {task && guide && (
         <>
           <SheetHeader className="border-b border-neutral-200 pr-12">
-            <SheetTitle>{step.label}</SheetTitle>
+            <SheetTitle>{task.title}</SheetTitle>
             <SheetDescription>Setup step {index + 1} of {total}</SheetDescription>
           </SheetHeader>
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+            <p className="text-sm text-neutral-600">{task.description}</p>
             <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm text-neutral-800 marker:text-neutral-400">
               {guide.steps.map((s) => <li key={s}>{s}</li>)}
             </ol>
@@ -240,14 +227,17 @@ export function SetupDrawer({
               <pre className="overflow-x-auto rounded-lg bg-neutral-900 p-3 font-mono text-xs leading-relaxed text-neutral-100">{guide.snippet}</pre>
             )}
             <label className="flex items-center gap-2 text-sm text-neutral-700">
-              <Checkbox checked={step.done} onCheckedChange={(c) => onToggleDone(Boolean(c))} />
-              Mark done
+              <Checkbox checked={task.done} onCheckedChange={(c) => onToggleDone(Boolean(c))} />
+              Mark as done
             </label>
           </div>
-          <div className="border-t border-neutral-200 p-4">
-            <Button className="w-full bg-indigo-600 text-white hover:bg-indigo-700" onClick={() => toast(`Would open ${guide.flow}`)}>
-              Open {guide.flow} <ArrowRight />
+          <div className="flex gap-2 border-t border-neutral-200 p-4">
+            <Button className="flex-1 bg-indigo-600 text-white hover:bg-indigo-700" onClick={() => toast(`Would open ${task.primary.flow}`)}>
+              {task.primary.label} <ArrowRight />
             </Button>
+            {task.secondary && (
+              <Button variant="outline" onClick={() => toast(`Would open ${task.secondary!.flow}`)}>{task.secondary.label}</Button>
+            )}
           </div>
         </>
       )}

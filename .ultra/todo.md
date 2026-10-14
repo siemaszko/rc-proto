@@ -31,3 +31,9 @@
 - [x] What changed tiles with action + Ask Rico why, "1 more", gated tile
 - [x] Active subs incl./excl., Rico copy + "new customers" reply, Not-on-page line, rule 3
 - [x] Screenshots 02, 03, 04, 08, 09 (Rico shots moved to 10, 11), README, deploy
+
+## Round 7: New project onboarding (brief, 35 min box)
+- [x] `onboarding` in new_project.json (6 tasks), one OnboardingBlock for both views
+- [x] Today: block + Rico bar + cards at 0 + "No live transactions to show"
+- [x] Proposed: block opens the task drawer; Mark as done shared; phone stacks
+- [x] Screenshots 05, 06, 10 (Rico shots to 12, 13), README, deploy

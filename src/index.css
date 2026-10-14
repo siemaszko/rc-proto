@@ -155,3 +155,9 @@
 @media (prefers-reduced-motion: reduce) {
   .rico-jiggle { animation: none; }
 }
+
+/* Onboarding carousel: a thin scrollbar under the task cards. */
+.onboarding-carousel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-300) transparent;
+}
