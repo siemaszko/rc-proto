@@ -91,9 +91,9 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 
 ## Stubbed
 
-- Chart modal and rows modal (they show metric, period, and the carried-over "as of"
-  cutoff, no real chart or rows). "Full definition", "Read the explainer" (small stub
-  modal) and sidebar nav do nothing.
+- Chart and rows are drawn from mock data (the chart from each card's series, the rows
+  seeded per card); "Open in Charts", "Export CSV" and "Open in Customers" are toasts.
+  "Read the explainer" is a small stub modal; sidebar nav does nothing.
 - Rico answers are 5 canned replies with hardcoded Normal-state numbers, in every state.
   Setup "Open <flow>" buttons only show a toast; done state resets on reload.
 - "Test a new paywall" opens a stub ("Would open Experiments with this segment
