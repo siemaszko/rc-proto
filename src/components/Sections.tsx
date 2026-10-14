@@ -26,7 +26,7 @@ const DIRECTION = {
   info: { Icon: BookOpen, tone: "text-neutral-500" },
 } as const;
 
-const tile = "rounded-[12px] border border-neutral-200 bg-white p-3";
+const tile = "min-h-[120px] rounded-[12px] border border-neutral-200 bg-white p-4";
 
 // One row of four compact tiles under the four default cards, one per card, in the same grid
 // (the caller adds the (+) spacer so the columns line up). Icon + tag, a sentence of at most
@@ -64,14 +64,14 @@ export function WhatChanged({
           const { Icon, tone } = DIRECTION[item.direction as keyof typeof DIRECTION];
           const business = item.kind === "business";
           return (
-            <article key={id} aria-label={`${labelFor(id)}: ${item.text}`} className={cn(tile, "flex flex-col gap-1 transition-colors hover:border-neutral-300")}>
+            <article key={id} aria-label={`${labelFor(id)}: ${item.text}`} className={cn(tile, "flex flex-col gap-2 transition-colors hover:border-neutral-300")}>
               <div className="flex items-center justify-between">
-                <Icon className={cn("size-4", tone)} />
+                <Icon className={cn("size-[18px]", tone)} />
                 <span className={cn("rounded-full px-2 py-0.5 text-[11px] leading-none font-medium", business ? "bg-indigo-50 text-indigo-700" : "bg-neutral-100 text-neutral-700")}>
                   {business ? "Business" : "Definition"}
                 </span>
               </div>
-              <p className="line-clamp-2 text-sm leading-snug text-neutral-800">{item.text}</p>
+              <p className="line-clamp-2 text-[15px] leading-snug text-neutral-800">{item.text}</p>
               <div className="mt-auto flex items-center justify-between gap-2">
                 <button onClick={() => onAction(item)} className="flex items-center gap-1 text-[13px] font-medium text-indigo-600 hover:underline">
                   {item.action.label} <ArrowRight className="size-3.5" />
@@ -79,9 +79,9 @@ export function WhatChanged({
                 <Tooltip>
                   <TooltipTrigger
                     render={<button onClick={() => onAskRico(item)} aria-label="Ask Rico why" />}
-                    className="grid size-6 shrink-0 place-items-center rounded-full transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none"
+                    className="grid size-7 shrink-0 place-items-center rounded-full transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none"
                   >
-                    <RicoAvatar size={24} />
+                    <RicoAvatar size={28} />
                   </TooltipTrigger>
                   <TooltipContent>Ask Rico why</TooltipContent>
                 </Tooltip>
