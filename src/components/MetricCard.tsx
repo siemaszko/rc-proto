@@ -16,13 +16,15 @@ type Props = {
   asOf: string;
   gated: boolean;
   sample: boolean;
+  // New project with "Show sample data" off: label and a dash, nothing else.
+  empty?: boolean;
   onOpenChart: () => void;
   onOpenRows: () => void;
 };
 
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
-export function MetricCard({ card, preset, asOf, gated, sample, onOpenChart, onOpenRows }: Props) {
+export function MetricCard({ card, preset, asOf, gated, sample, empty, onOpenChart, onOpenRows }: Props) {
   const p = card.by_period[preset];
   const window = card.row === "now" ? card.window : periodLabel(preset);
   const up = p.delta_pct > 0, down = p.delta_pct < 0;
@@ -38,7 +40,7 @@ export function MetricCard({ card, preset, asOf, gated, sample, onOpenChart, onO
       onKeyDown={(e) => e.key === "Enter" && onOpenChart()}
       className="relative cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-4 shadow-none ring-0 hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
     >
-      {sample && (
+      {sample && !empty && (
         <span aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-semibold tracking-widest text-neutral-900/[0.04] uppercase select-none -rotate-12">
           Sample
         </span>
@@ -47,7 +49,7 @@ export function MetricCard({ card, preset, asOf, gated, sample, onOpenChart, onO
       <div className="flex items-center justify-between gap-2">
         <span className="text-[13px] font-medium tracking-wide text-neutral-500 uppercase">{card.label}</span>
         <div className="flex items-center gap-1.5">
-          {sample && <Badge className="bg-amber-50 text-amber-800 hover:bg-amber-50">Sample</Badge>}
+          {sample && !empty && <Badge className="bg-amber-50 text-amber-800 hover:bg-amber-50">Sample</Badge>}
           <Popover>
             <PopoverTrigger
               onClick={stop}
@@ -81,8 +83,12 @@ export function MetricCard({ card, preset, asOf, gated, sample, onOpenChart, onO
       </div>
 
       <div className="mt-2 flex items-baseline justify-between gap-3">
-        <span className="text-[28px] leading-none font-semibold text-neutral-900 tabular-nums">{formatValue(p.value, card.unit)}</span>
-        {gated ? (
+        <span className={cn("text-[28px] leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
+          {empty ? "—" : formatValue(p.value, card.unit)}
+        </span>
+        {empty ? (
+          <span className="text-xs text-neutral-400">No data yet</span>
+        ) : gated ? (
           <span className="text-xs text-neutral-400">Not enough data yet</span>
         ) : (
           <span className={cn("flex items-center gap-0.5 text-[13px] font-medium tabular-nums", tone)}>
@@ -93,35 +99,39 @@ export function MetricCard({ card, preset, asOf, gated, sample, onOpenChart, onO
         )}
       </div>
 
-      <div className={cn("mt-3 h-7", tone)}>
-        {!gated && <Sparkline points={p.sparkline} className="h-7 w-full" />}
-      </div>
+      {!empty && (
+        <>
+          <div className={cn("mt-3 h-7", tone)}>
+            {!gated && <Sparkline points={p.sparkline} drawIn={sample} className="h-7 w-full" />}
+          </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-neutral-400">
-        <span>{window}</span>
-        <span aria-hidden>·</span>
-        {cached ? (
-          <span className="italic">cached · as of {timeUtc(card.freshness.computed_at)}</span>
-        ) : caveat ? (
-          <Tooltip>
-            <TooltipTrigger render={<span onClick={stop} />} className="cursor-help underline decoration-dotted underline-offset-2">
-              as of {timeUtc(asOf)}
-            </TooltipTrigger>
-            <TooltipContent>{caveat}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <span>as of {timeUtc(asOf)}</span>
-        )}
-      </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-neutral-400">
+            <span>{window}</span>
+            <span aria-hidden>·</span>
+            {cached ? (
+              <span className="italic">cached · as of {timeUtc(card.freshness.computed_at)}</span>
+            ) : caveat ? (
+              <Tooltip>
+                <TooltipTrigger render={<span onClick={stop} />} className="cursor-help underline decoration-dotted underline-offset-2">
+                  as of {timeUtc(asOf)}
+                </TooltipTrigger>
+                <TooltipContent>{caveat}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span>as of {timeUtc(asOf)}</span>
+            )}
+          </div>
 
-      <div className="mt-3 flex gap-1 border-t border-neutral-100 pt-2">
-        <Button variant="ghost" size="sm" className="-ml-2 text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenChart(); }}>
-          Open chart <ArrowRight />
-        </Button>
-        <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenRows(); }}>
-          View rows <ArrowRight />
-        </Button>
-      </div>
+          <div className="mt-3 flex gap-1 border-t border-neutral-100 pt-2">
+            <Button variant="ghost" size="sm" className="-ml-2 text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenChart(); }}>
+              Open chart <ArrowRight />
+            </Button>
+            <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenRows(); }}>
+              View rows <ArrowRight />
+            </Button>
+          </div>
+        </>
+      )}
     </Card>
   );
 }

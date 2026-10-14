@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, BookOpen, ChevronDown, CircleCheck, Circle, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, ChevronRight, CircleCheck, Circle, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -59,7 +59,8 @@ export function WhatChanged({
   );
 }
 
-export function RicoBar({ placeholder, prompts = [] }: { placeholder: string; prompts?: string[] }) {
+// The "before" Rico bar on the Today view. Proposed uses RicoInput + RicoDrawer.
+export function RicoBar({ placeholder }: { placeholder: string }) {
   return (
     <div className={cn(panel, "flex flex-col gap-3 p-3")}>
       <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
@@ -70,15 +71,6 @@ export function RicoBar({ placeholder, prompts = [] }: { placeholder: string; pr
         />
         <span className="hidden text-xs text-neutral-400 sm:inline">Rico</span>
       </div>
-      {prompts.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {prompts.map((p) => (
-            <button key={p} className="rounded-full border border-neutral-200 px-3 py-1 text-xs text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50">
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -138,30 +130,30 @@ export function RecentTransactions({ rows, collapsible }: { rows: Transaction[];
   );
 }
 
-export function SetupChecklist({ setup }: { setup: NonNullable<Overview["setup"]> }) {
-  const next = setup.steps.findIndex((s) => !s.done);
+export function SetupChecklist({ steps, onOpenStep }: { steps: { label: string; done: boolean }[]; onOpenStep: (i: number) => void }) {
+  const done = steps.filter((s) => s.done).length;
+  const next = steps.findIndex((s) => !s.done);
   return (
     <Card className={cn(panel, "gap-3 p-4")}>
       <div className="flex items-center justify-between">
         <SectionTitle>Finish setting up your project</SectionTitle>
-        <span className="text-xs text-neutral-500">{setup.done} of {setup.steps.length} steps</span>
+        <span className="text-xs text-neutral-500">{done} of {steps.length} done</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
-        <div className="h-full bg-indigo-600" style={{ width: `${(setup.done / setup.steps.length) * 100}%` }} />
+        <div className="h-full bg-indigo-600" style={{ width: `${(done / steps.length) * 100}%` }} />
       </div>
-      <ol className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-        {setup.steps.map((s, i) => (
-          <li key={s.label} className="flex items-center gap-2">
-            {s.done ? <CircleCheck className="size-4 text-emerald-600" /> : <Circle className="size-4 text-neutral-300" />}
-            {i === next ? (
-              <a href="#" onClick={(e) => e.preventDefault()} className="font-medium text-indigo-600 hover:underline">{s.label} →</a>
-            ) : (
-              <span className={s.done ? "text-neutral-400 line-through" : "text-neutral-700"}>{s.label}</span>
-            )}
+      <ol className="grid grid-cols-1 gap-x-6 gap-y-0.5 text-sm sm:grid-cols-2">
+        {steps.map((s, i) => (
+          <li key={s.label}>
+            <button onClick={() => onOpenStep(i)} className="-mx-2 flex w-full items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-neutral-50">
+              {s.done ? <CircleCheck className="size-4 shrink-0 text-emerald-600" /> : <Circle className="size-4 shrink-0 text-neutral-300" />}
+              <span className={cn("flex-1", s.done ? "text-neutral-400 line-through" : i === next ? "font-medium text-indigo-600" : "text-neutral-700")}>{s.label}</span>
+              <ChevronRight className="size-4 shrink-0 text-neutral-300" />
+            </button>
           </li>
         ))}
       </ol>
-      <p className="text-xs text-neutral-400">The cards below show sample data until your first transactions arrive.</p>
+      <p className="text-xs text-neutral-400">The cards stay empty until your first transactions arrive. Turn on "Show sample data" to preview them.</p>
     </Card>
   );
 }

@@ -18,3 +18,9 @@
 - [x] Modals (chart stub, rows stub, not-on-this-page) + Today view
 - [x] Phone width pass
 - [x] 5 screenshots (Playwright), README, push
+
+## Round 2 (design review 14.10, 45 min box)
+- [x] Rico input under the header (all states) + chat drawer with mocked replies and chips
+- [x] New project: setup tasks open a drawer (steps, snippet, Open flow toast, mark done)
+- [x] New project: empty cards by default, "Show sample data" switch, sparkline draw-in
+- [ ] Screenshots 02, 04, 06, 07 re-taken and copied; README; push and confirm deploy

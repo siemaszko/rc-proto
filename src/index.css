@@ -127,3 +127,15 @@
     @apply font-sans;
     }
 }
+/* Sample sparklines draw in when "Show sample data" turns on. The only animation on the page. */
+@keyframes spark-draw {
+  from { stroke-dashoffset: calc(var(--spark-len) * 1px); }
+  to { stroke-dashoffset: 0; }
+}
+.spark-draw {
+  stroke-dasharray: calc(var(--spark-len) * 1px);
+  animation: spark-draw 600ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spark-draw { animation: none; }
+}

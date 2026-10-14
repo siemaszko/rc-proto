@@ -4,12 +4,15 @@ import normalData from "@/data/normal.json";
 import lowVolumeData from "@/data/low_volume.json";
 import newProjectData from "@/data/new_project.json";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Toaster } from "@/components/ui/sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sidebar, TopBar } from "@/components/Shell";
 import { MetricCard, PlainCard } from "@/components/MetricCard";
 import { DesignRules, RecentTransactions, RicoBar, SectionTitle, SetupChecklist, WhatChanged } from "@/components/Sections";
+import { RicoDrawer, RicoInput, SetupDrawer } from "@/components/Drawers";
 import { ChartModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
 import { dateTimeUtc, periodLabel } from "@/lib/format";
 import type { CardData, ChartTarget, Overview, Preset, StateKey, View } from "@/types";
@@ -25,12 +28,6 @@ const PRESETS = { "7d": "Last 7 days", "28d": "Last 28 days", "90d": "Last 90 da
 // The order of today's page: "in total" cards first, then "last 28 days".
 const TODAY_ORDER = ["active_trials", "active_subscriptions", "mrr", "revenue", "new_customers", "active_customers"];
 
-const RICO_PROMPTS = [
-  "Why did trial-to-paid conversion drop?",
-  "Which product drove the new MRR?",
-  "How much did the Charts v3 restatement change revenue?",
-];
-
 export default function App() {
   const [view, setView] = useState<View>("proposed");
   const [stateKey, setStateKey] = useState<StateKey>("normal");
@@ -40,6 +37,12 @@ export default function App() {
   const [rowsOpen, setRowsOpen] = useState(false);
   const [notOnPageOpen, setNotOnPageOpen] = useState(false);
   const [explainerOpen, setExplainerOpen] = useState(false);
+  const [ricoOpen, setRicoOpen] = useState(false);
+  const [ricoDraft, setRicoDraft] = useState("");
+  const [showSample, setShowSample] = useState(false);
+  const [setupSteps, setSetupSteps] = useState(DATA.new_project.setup!.steps);
+  const [setupIndex, setSetupIndex] = useState(0);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const data = DATA[stateKey];
   const sample = Boolean(data.sample);
@@ -49,12 +52,18 @@ export default function App() {
   // Now-cards are "in total", but their delta and trend still follow the picker.
   const ctx = chart && { metric: chart.metric, periodLabel: periodLabel(preset), start: range.start, end: range.end, asOf: data.as_of };
 
+  const empty = sample && !showSample;
+  const openMetric = (metric: string) => {
+    const card = data.cards.find((c) => c.label === metric);
+    setChart({ metric, definition: card?.definition });
+    setChartOpen(true);
+  };
   const openChart = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setChartOpen(true); };
   const openRows = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setRowsOpen(true); };
 
   const cardsFor = (row: "now" | "period") =>
     data.cards.filter((c) => c.row === row).map((c) => (
-      <MetricCard key={c.id} card={c} preset={preset} asOf={data.as_of} gated={gated} sample={sample} onOpenChart={() => openChart(c)} onOpenRows={() => openRows(c)} />
+      <MetricCard key={c.id} card={c} preset={preset} asOf={data.as_of} gated={gated} sample={sample} empty={empty} onOpenChart={() => openChart(c)} onOpenRows={() => openRows(c)} />
     ));
 
   return (
@@ -128,10 +137,20 @@ export default function App() {
               </>
             ) : (
               <>
-                {data.setup && <SetupChecklist setup={data.setup} />}
+                <RicoInput value={ricoDraft} onChange={setRicoDraft} onOpen={() => setRicoOpen(true)} />
+
+                {data.setup && <SetupChecklist steps={setupSteps} onOpenStep={(i) => { setSetupIndex(i); setSetupOpen(true); }} />}
 
                 <section className="flex flex-col gap-3">
-                  <div className="flex h-8 items-center"><SectionTitle>Now</SectionTitle></div>
+                  <div className="flex h-8 items-center justify-between gap-3">
+                    <SectionTitle>Now</SectionTitle>
+                    {sample && (
+                      <label className="flex items-center gap-2 text-xs text-neutral-600">
+                        <Switch checked={showSample} onCheckedChange={setShowSample} />
+                        Show sample data
+                      </label>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">{cardsFor("now")}</div>
                 </section>
 
@@ -152,13 +171,10 @@ export default function App() {
                   data={data}
                   onOpen={(item) => {
                     if (!item.link.metric) return setExplainerOpen(true);
-                    const card = data.cards.find((c) => c.label === item.link.metric);
-                    setChart({ metric: item.link.metric, definition: card?.definition });
-                    setChartOpen(true);
+                    openMetric(item.link.metric);
                   }}
                 />
 
-                <RicoBar placeholder="Ask Rico about this page" prompts={data.what_changed.length ? RICO_PROMPTS : []} />
                 <RecentTransactions rows={data.recent_transactions} collapsible />
                 <DesignRules onNotOnPage={() => setNotOnPageOpen(true)} />
               </>
@@ -171,6 +187,22 @@ export default function App() {
       <RowsModal ctx={ctx} open={rowsOpen} onOpenChange={setRowsOpen} />
       <NotOnPageModal open={notOnPageOpen} onOpenChange={setNotOnPageOpen} />
       <ExplainerModal open={explainerOpen} onOpenChange={setExplainerOpen} />
+      <RicoDrawer
+        open={ricoOpen}
+        onOpenChange={setRicoOpen}
+        draft={ricoDraft}
+        onDraftChange={setRicoDraft}
+        onOpenChart={(metric) => { setRicoOpen(false); openMetric(metric); }}
+      />
+      <SetupDrawer
+        step={setupSteps[setupIndex]}
+        index={setupIndex}
+        total={setupSteps.length}
+        open={setupOpen}
+        onOpenChange={setSetupOpen}
+        onToggleDone={(done) => setSetupSteps((steps) => steps.map((s, i) => (i === setupIndex ? { ...s, done } : s)))}
+      />
+      <Toaster position="bottom-center" />
     </TooltipProvider>
   );
 }
