@@ -49,7 +49,7 @@ Push to `main` deploys to Netlify.
 - **New project** (round 7): both views open with RevenueCat's real onboarding block, from
   `onboarding` in new_project.json: progress ring, "Let's get you ready… (2 of 6)", "Mark all
   as done", "Show completed" / "Hide completed", and a snap-scrolling carousel of the open
-  tasks (stacked on a phone). No illustrations (RevenueCat's artwork isn't ours).
+  tasks (wide cards that stretch, stacked on a phone). No illustrations (RevenueCat's artwork isn't ours).
   "Mark as done" moves a task to completed in both views (one shared state). In **Today**
   the buttons are toasts ("Would open <flow>"), followed by the old Rico bar, the 6 cards at
   0 and "No live transactions to show": the faithful before. In **Proposed** the title and
@@ -113,9 +113,10 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **Screenshot numbering** follows the briefs: 08 (+) picker, 09 What changed tiles, 10 Today
   in New project; the Rico mascot and drag shots moved to 12 and 13. 05 is now the phone in
   New project (onboarding stacked); the Normal phone page is `phone-full.png`.
-- **Onboarding task cards** drop the illustrations (placeholders read as broken) and share
-  one footer pinned to the bottom: buttons on one line, "Mark as done" under them at the
-  right, so the buttons line up across the row.
+- **Onboarding task cards** drop the illustrations (placeholders read as broken) and stretch
+  to fill the row, never under 440px: four open tasks show about two and a bit and scroll,
+  as on the real page. One footer row pinned to the bottom (buttons left, "Mark as done"
+  right) keeps the buttons lined up.
 - **"Business" tag** is indigo (the page's one accent) rather than a separate blue.
 - **Dialog backdrop blur removed** so the What changed strip stays readable behind the
   chart modal in screenshot 4.

@@ -62,7 +62,8 @@ export function OnboardingBlock({
       {shown.length === 0 ? (
         <p className="rounded-[12px] border border-dashed border-neutral-300 p-4 text-sm text-neutral-500">All done. Show completed to review them.</p>
       ) : (
-        // Carousel from sm up: three cards per view at 1280px, snap, thin scrollbar. Stacked on a phone.
+        // Carousel from sm up: cards stretch to fill the row but never go under 440px, so four
+        // open tasks show about two and a bit (as on the real page) and scroll. Stacked on a phone.
         <div className="onboarding-carousel -mx-1 flex flex-col gap-3 px-1 pb-2 sm:snap-x sm:snap-mandatory sm:flex-row sm:overflow-x-auto">
           {shown.map((t) => {
             const open = onOpenTask ? () => onOpenTask(t) : () => onFlow(t.primary.flow);
@@ -70,7 +71,7 @@ export function OnboardingBlock({
               <article
                 key={t.id}
                 className={cn(
-                  "relative flex shrink-0 snap-start flex-col gap-2 rounded-[12px] border border-neutral-200 bg-white p-4 sm:w-[calc((100%-1.5rem)/3)] sm:min-w-[280px]",
+                  "relative flex snap-start flex-col gap-2 rounded-[12px] border border-neutral-200 bg-white p-5 sm:min-w-[440px] sm:flex-1",
                   t.done && "bg-neutral-50",
                 )}
               >
@@ -92,17 +93,15 @@ export function OnboardingBlock({
                   {t.done && <span className="text-xs font-medium text-emerald-600">Completed</span>}
                 </div>
                 <p className="text-sm text-neutral-600">{t.description}</p>
-                {/* Same footer on every card, pinned to the bottom, so buttons line up across the row:
-                    buttons on one line, "Mark as done" on its own line at the right. */}
+                {/* One footer row pinned to the bottom, as on the real page: buttons left,
+                    "Mark as done" right. Lines up across the row. */}
                 {!t.done && (
-                  <div className="mt-auto flex flex-col gap-2 border-t border-neutral-100 pt-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700" onClick={open}>{t.primary.label}</Button>
-                      {t.secondary && (
-                        <Button size="sm" variant="outline" onClick={() => onFlow(t.secondary!.flow)}>{t.secondary.label}</Button>
-                      )}
-                    </div>
-                    <button onClick={() => onDone(t.id)} className="self-end text-sm font-medium text-neutral-500 hover:text-neutral-800 hover:underline">
+                  <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+                    <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700" onClick={open}>{t.primary.label}</Button>
+                    {t.secondary && (
+                      <Button size="sm" variant="outline" onClick={() => onFlow(t.secondary!.flow)}>{t.secondary.label}</Button>
+                    )}
+                    <button onClick={() => onDone(t.id)} className="ml-auto text-sm font-medium whitespace-nowrap text-indigo-600 hover:underline">
                       Mark as done
                     </button>
                   </div>
