@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { GRID } from "@/lib/grid";
 import { FlaskConical, Info } from "lucide-react";
 import normalData from "@/data/normal.json";
 import lowVolumeData from "@/data/low_volume.json";
@@ -120,7 +122,13 @@ export default function App() {
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar />
 
-          <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 pt-6 pb-24 md:px-8">
+          <main
+            className={cn(
+              "mx-auto flex w-full flex-col gap-6 pt-6 pb-24",
+              // Today keeps the page as it is; Proposed gets the 1120px column with 24px sides.
+              view === "today" ? "max-w-[1200px] px-4 md:px-8" : "max-w-[1120px] px-6",
+            )}
+          >
             <header className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-xl font-semibold">Overview</h1>
@@ -182,22 +190,18 @@ export default function App() {
               <>
                 {data.setup && <SetupChecklist steps={setupSteps} onOpenStep={(i) => { setSetupIndex(i); setSetupOpen(true); }} />}
 
-                {/* Four default cards in one row, extras from (+) after them; (+) at the row's end. */}
+                {/* Four default cards in one row; extras from "+ Add a card" go to a second row. */}
                 <section aria-label="Key numbers" className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-                      {data.cards.map((c) => cardFor(c))}
-                      {extra.map((id) => cardFor(optional[id], () => setExtra(extra.filter((x) => x !== id))))}
-                    </div>
-                    <AddCard variant="circle" added={extra} onAdd={addCard} className="hidden shrink-0 md:block" />
+                  <div className="flex justify-end">
+                    <AddCard added={extra} onAdd={addCard} />
                   </div>
-                  <AddCard variant="row" added={extra} onAdd={addCard} className="md:hidden" />
+                  <div className={GRID}>
+                    {data.cards.map((c) => cardFor(c))}
+                    {extra.map((id) => cardFor(optional[id], () => setExtra(extra.filter((x) => x !== id))))}
+                  </div>
                 </section>
 
-                {/* Same columns as the cards: an empty 32px slot stands in for (+) so tiles sit under their cards. */}
-                <div className="flex gap-3">
-                  <div className="min-w-0 flex-1">
-                    <WhatChanged
+                <WhatChanged
                       data={data}
                       cardIds={data.cards.map((c) => c.id)}
                       labelFor={labelFor}
@@ -208,9 +212,6 @@ export default function App() {
                       }}
                       onAskRico={(item) => askRico(`${labelFor(item.card_id)}: ${item.text}`)}
                     />
-                  </div>
-                  <div aria-hidden className="hidden w-8 shrink-0 md:block" />
-                </div>
 
                 <RecentTransactions rows={data.recent_transactions} collapsible />
                 <DesignRules onNotOnPage={() => setNotOnPageOpen(true)} />

@@ -1,9 +1,7 @@
-import { ArrowRight, Info, Minus, Triangle, X } from "lucide-react";
+import { ArrowUpRight, Info, Minus, Triangle, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
 import { Sparkline } from "@/components/Sparkline";
 import { cn } from "@/lib/utils";
 import { formatValue, presetDays, timeUtc } from "@/lib/format";
@@ -16,7 +14,7 @@ type Props = {
   window: string;
   /** Extra lines under the definition in the (i) popover. */
   notes?: string[];
-  /** Cards added under (+) can be removed again. */
+  /** Cards added under "+ Add a card" can be removed again. */
   onRemove?: () => void;
   asOf: string;
   gated: boolean;
@@ -31,6 +29,18 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 // Cards where a rise is bad news: the delta turns red when it goes up.
 const LOWER_IS_BETTER = new Set(["churn"]);
 
+// What the (i) panel's last line offers: the rows behind the number.
+function rowsLink(card: CardData, preset: Preset) {
+  const p = card.by_period[preset] as { value: number; transactions?: number };
+  if (card.id === "active_subscriptions") return `See the ${formatValue(p.value, "count")} subscriptions behind this number`;
+  if (card.id === "active_trials") return `See the ${formatValue(p.value, "count")} trials behind this number`;
+  if (card.id === "mrr") return "See the subscriptions behind this MRR";
+  if (p.transactions) return `See the ${formatValue(p.transactions, "count")} transactions behind this number`;
+  return "See the rows behind this number";
+}
+
+// Proposed KPI card. Number and trend on the face; definition and rows behind the (i).
+// No links on the face: the whole card opens the chart, an arrow hints at it on hover.
 export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated, sample, empty, onOpenChart, onOpenRows }: Props) {
   const p = card.by_period[preset];
   const up = p.delta_pct > 0, down = p.delta_pct < 0;
@@ -38,14 +48,17 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
   const tone = good ? "text-emerald-600" : bad ? "text-rose-600" : "text-neutral-500";
   const cached = card.freshness.kind === "cached";
   const caveat = "caveat" in card.freshness ? (card.freshness.caveat as string) : null;
+  // "In total, now · as of 19:42 UTC" for now-cards; period cards carry their dates instead.
+  const line = card.row === "now" ? `${window} · as of ${timeUtc(cached ? card.freshness.computed_at : asOf)}` : window;
 
   return (
     <Card
       role="button"
       tabIndex={0}
+      aria-label={`${card.label}, open chart`}
       onClick={onOpenChart}
       onKeyDown={(e) => e.key === "Enter" && onOpenChart()}
-      className="group/metric relative cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-4 shadow-none ring-0 hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
+      className="group/metric relative min-h-[200px] cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-5 shadow-none ring-0 transition-colors hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
     >
       {sample && !empty && (
         <span aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-semibold tracking-widest text-neutral-900/[0.04] uppercase select-none -rotate-12">
@@ -54,9 +67,13 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[13px] font-medium tracking-wide text-neutral-500 uppercase">{card.label}</span>
+        <span className="text-xs font-medium tracking-wide text-neutral-500 uppercase">{card.label}</span>
         <div className="flex items-center gap-1.5">
           {sample && !empty && <Badge className="bg-amber-50 text-amber-800 hover:bg-amber-50">Sample</Badge>}
+          <ArrowUpRight
+            aria-hidden
+            className="size-3.5 text-neutral-400 opacity-0 transition-opacity duration-150 group-hover/metric:opacity-100 group-focus-visible/metric:opacity-100 [@media(hover:none)]:opacity-100"
+          />
           <Popover>
             <PopoverTrigger
               onClick={stop}
@@ -65,26 +82,16 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
             >
               <Info className="size-4" />
             </PopoverTrigger>
+            {/* Trust panel: what the number is, that it matches Charts, and the rows behind it. */}
             <PopoverContent side="right" align="start" sideOffset={12} className="w-80 gap-2 p-3" onClick={stop}>
               <p className="text-sm font-medium text-neutral-900">{card.label}</p>
               <p className="text-sm text-neutral-700">{card.definition}</p>
+              <p className="text-xs text-neutral-500">Same definition as Charts v3</p>
               {notes && <div className="text-sm text-neutral-900 tabular-nums">{notes.map((n) => <p key={n}>{n}</p>)}</div>}
-              <p className="text-xs text-neutral-500">Same definition as Charts v3.</p>
-              <Separator />
-              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-neutral-600">
-                <dt className="text-neutral-400">Window</dt>
-                <dd>{window}</dd>
-                <dt className="text-neutral-400">Data as of</dt>
-                <dd>
-                  {cached ? `Cached, computed ${timeUtc(card.freshness.computed_at)}` : `${timeUtc(asOf)} (page cutoff)`}
-                </dd>
-              </dl>
-              <div className="flex items-center justify-between pt-1">
-                <a href="#" onClick={(e) => e.preventDefault()} className="text-xs font-medium text-indigo-600 hover:underline">
-                  Full definition →
-                </a>
-                <span className="text-[11px] text-neutral-400 italic">Definitions paraphrased</span>
-              </div>
+              {caveat && <p className="text-xs text-neutral-500">{caveat}</p>}
+              <button onClick={onOpenRows} className="self-start pt-1 text-left text-xs font-medium text-indigo-600 hover:underline">
+                {rowsLink(card, preset)} →
+              </button>
             </PopoverContent>
           </Popover>
           {onRemove && (
@@ -96,17 +103,17 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
       </div>
 
       {/* Number left, delta chip right on the same baseline; "vs prev" under the chip. */}
-      <div className="mt-1.5 flex items-start justify-between gap-2">
-        <span className={cn("text-[28px] leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
+      <div className="mt-2 flex items-start justify-between gap-2">
+        <span className={cn("text-4xl leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
           {empty ? "—" : formatValue(p.value, card.unit)}
         </span>
         {empty ? (
-          <span className="pt-1 text-xs text-neutral-400">No data yet</span>
+          <span className="pt-1.5 text-xs text-neutral-400">No data yet</span>
         ) : gated ? (
-          <span className="pt-1 text-right text-xs text-neutral-400">Not enough data yet</span>
+          <span className="pt-1.5 text-right text-xs text-neutral-400">Not enough data yet</span>
         ) : (
-          <span className="flex shrink-0 flex-col items-end pt-0.5">
-            <span className={cn("flex items-center gap-0.5 text-[13px] leading-none font-medium whitespace-nowrap tabular-nums", tone)}>
+          <span className="flex shrink-0 flex-col items-end pt-1">
+            <span className={cn("flex items-center gap-1 text-sm leading-none font-medium whitespace-nowrap tabular-nums", tone)}>
               {up ? <Triangle className="size-2.5 fill-current" /> : down ? <Triangle className="size-2.5 rotate-180 fill-current" /> : <Minus className="size-3" />}
               {Math.abs(p.delta_pct).toFixed(1)}%
             </span>
@@ -117,42 +124,10 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
 
       {!empty && (
         <>
-          <div className={cn("mt-2 h-9", tone)}>
-            {!gated && <Sparkline points={p.sparkline} drawIn={sample} className="h-9 w-full" />}
+          <div className={cn("mt-4 h-16", tone)}>
+            {!gated && <Sparkline points={p.sparkline} drawIn={sample} strokeWidth={1.75} area className="h-16 w-full" />}
           </div>
-
-          {/* One muted line; on hover or focus the chart/rows links fade in over its right side.
-              Devices without hover keep the links visible, in the flow under the line. */}
-          <div className="relative mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-neutral-400">
-            <span>{window}</span>
-            <span aria-hidden>·</span>
-            {cached ? (
-              <span className="italic">cached · as of {timeUtc(card.freshness.computed_at)}</span>
-            ) : caveat ? (
-              <Tooltip>
-                <TooltipTrigger render={<span onClick={stop} />} className="cursor-help underline decoration-dotted underline-offset-2">
-                  as of {timeUtc(asOf)}
-                </TooltipTrigger>
-                <TooltipContent>{caveat}</TooltipContent>
-              </Tooltip>
-            ) : (
-              <span>as of {timeUtc(asOf)}</span>
-            )}
-            <span
-              className={cn(
-                "flex gap-3 bg-white pl-3 text-xs font-medium transition-opacity duration-150",
-                "absolute right-0 bottom-0 opacity-0 group-focus-within/metric:opacity-100 group-hover/metric:opacity-100",
-                "[@media(hover:none)]:static [@media(hover:none)]:basis-full [@media(hover:none)]:pl-0 [@media(hover:none)]:opacity-100",
-              )}
-            >
-              <button className="flex items-center gap-0.5 text-indigo-600 hover:underline" onClick={(e) => { stop(e); onOpenChart(); }}>
-                Open chart <ArrowRight className="size-3" />
-              </button>
-              <button className="flex items-center gap-0.5 text-indigo-600 hover:underline" onClick={(e) => { stop(e); onOpenRows(); }}>
-                View rows <ArrowRight className="size-3" />
-              </button>
-            </span>
-          </div>
+          <p className="mt-auto pt-3 text-xs text-neutral-400">{line}</p>
         </>
       )}
     </Card>

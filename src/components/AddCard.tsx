@@ -15,43 +15,32 @@ export const OPTIONAL_CARDS = [
 export type OptionalCardId = (typeof OPTIONAL_CARDS)[number]["id"];
 export const MAX_EXTRA = 2;
 
-// (+) at the end of the card row: a 32px circle on desktop and tablet, a full-width dashed
-// row under the cards on a phone. Both open the same list.
+// "+ Add a card": a text button on the line above the cards, right-aligned. Added cards go
+// into the same 4-column grid, on a second row.
 export function AddCard({
-  variant, added, onAdd, className,
-}: { variant: "circle" | "row"; added: OptionalCardId[]; onAdd: (id: OptionalCardId) => void; className?: string }) {
+  added, onAdd, className,
+}: { added: OptionalCardId[]; onAdd: (id: OptionalCardId) => void; className?: string }) {
   const [open, setOpen] = useState(false);
   const full = added.length >= MAX_EXTRA;
 
-  const trigger =
-    variant === "circle" ? (
-      <button
-        aria-label="Add a card"
-        aria-disabled={full}
-        className={cn(
-          "grid size-8 place-items-center rounded-full border border-neutral-300 bg-white text-neutral-400",
-          full ? "cursor-not-allowed opacity-50" : "hover:border-neutral-400 hover:text-neutral-600",
-        )}
-      />
-    ) : (
-      <button
-        aria-disabled={full}
-        className={cn(
-          "flex h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-dashed border-neutral-300 text-sm text-neutral-500",
-          full ? "cursor-not-allowed opacity-50" : "hover:border-neutral-400 hover:text-neutral-700",
-        )}
-      />
-    );
+  const trigger = (
+    <button
+      aria-disabled={full}
+      className={cn(
+        "flex items-center gap-1 text-[13px] text-neutral-500",
+        full ? "cursor-not-allowed opacity-50" : "hover:text-indigo-600",
+      )}
+    />
+  );
 
   return (
     <div className={className}>
       <Popover open={open} onOpenChange={(o) => setOpen(o && !full)}>
         <Tooltip>
           <TooltipTrigger render={<PopoverTrigger render={trigger} />}>
-            <Plus className="size-4" />
-            {variant === "row" && (full ? "Up to 2 extra cards" : "Add a card")}
+            <Plus className="size-3.5" /> Add a card
           </TooltipTrigger>
-          {variant === "circle" && <TooltipContent side="left">{full ? "Up to 2 extra cards" : "Add a card (up to 2)"}</TooltipContent>}
+          <TooltipContent side="left">{full ? "Up to 2 extra cards" : "Add a card (up to 2)"}</TooltipContent>
         </Tooltip>
         <PopoverContent align="end" className="w-64 gap-0 p-1">
           {OPTIONAL_CARDS.map((c) => {

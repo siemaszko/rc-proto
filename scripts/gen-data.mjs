@@ -7,6 +7,7 @@ const CACHED_AT = "2026-10-14T18:00:00Z";
 // Flow periods are full days: the last one is the day before the cutoff.
 const END = new Date("2026-10-13T00:00:00Z");
 const DAYS = 200;
+const AVG_TX = 4.716; // average revenue per transaction, USD
 const PRESETS = { "7d": 7, "28d": 28, "90d": 90 };
 
 function rng(seed) {
@@ -110,12 +111,15 @@ function buildCards(s, rates) {
     return [k, { value: now, delta_pct: pct(now, prev), sparkline: spark }];
   }));
 
+  // Revenue's rows are transactions: a count for "See the 1,203 transactions behind this number".
+  const withTransactions = (byPeriod) => Object.fromEntries(Object.entries(byPeriod).map(([k, v]) => [k, { ...v, transactions: Math.round(v.value / AVG_TX) }]));
+
   // The four default cards, in the order they show.
   const cards = [
     card("mrr", "now", "MRR", "USD", "In total, now", realtime, now(s.mrr)),
     card("active_subscriptions", "now", "Active subscriptions", "count", "In total, now", realtime, now(s.subs)),
     card("active_trials", "now", "Active trials", "count", "In total, now", realtime, now(s.trials)),
-    card("revenue", "period", "Revenue", "USD", fullDays(28), { ...realtime, caveat: "Late refunds may adjust up to 7 days." }, flow(s.revenue)),
+    card("revenue", "period", "Revenue", "USD", fullDays(28), { ...realtime, caveat: "Late refunds may adjust up to 7 days." }, withTransactions(flow(s.revenue))),
   ];
   // Cards one tap away under (+). Same shape as `cards`.
   const optional_cards = {

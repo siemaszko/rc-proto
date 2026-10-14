@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RicoAvatar } from "@/components/Rico";
+import { GRID } from "@/lib/grid";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 import type { Overview, Transaction } from "@/types";
@@ -45,11 +46,12 @@ export function WhatChanged({
   const byCard = new Map(data.what_changed.map((w) => [w.card_id, w]));
   return (
     <section className="flex flex-col gap-3" aria-labelledby="what-changed">
-      <div className="flex items-baseline justify-between gap-3">
-        <SectionTitle><span id="what-changed">What changed</span></SectionTitle>
+      {/* 15px semibold, 32px above (24px page gap + 8px), 12px below. Same grid as the cards. */}
+      <div className="mt-2 flex items-baseline justify-between gap-3">
+        <h2 id="what-changed" className="text-[15px] font-semibold text-neutral-900">What changed</h2>
         <span className="text-xs text-neutral-400">last 28 full days</span>
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+      <div className={GRID}>
         {cardIds.map((id) => {
           const item = byCard.get(id);
           if (gated || !item) {
@@ -197,7 +199,7 @@ export function DesignRules({ onNotOnPage }: { onNotOnPage: () => void }) {
       <ol className="flex list-decimal flex-col gap-1 pl-4">
         <li>You never have to ask if the number is right: definition, window and freshness are on the card.</li>
         <li>A number without direction is incomplete: every card shows change and trend.</li>
-        <li>Every card leads somewhere: chart, rows, and when there&apos;s something to do, the action.</li>
+        <li>Every card leads somewhere: the chart, and when there&apos;s something to do, the action.</li>
       </ol>
       <Button variant="link" className="h-auto shrink-0 p-0 text-xs text-indigo-600" onClick={onNotOnPage}>
         Not on this page, and why →

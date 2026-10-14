@@ -469,6 +469,7 @@
         149,
         133
       ],
+      "transactions": 697,
       "delta_vs": "previous 28 days",
       "by_period": {
         "7d": {
@@ -482,7 +483,8 @@
             144,
             149,
             133
-          ]
+          ],
+          "transactions": 184
         },
         "28d": {
           "value": 3287,
@@ -516,7 +518,8 @@
             144,
             149,
             133
-          ]
+          ],
+          "transactions": 697
         },
         "90d": {
           "value": 9920,
@@ -552,7 +555,8 @@
             110,
             127,
             133
-          ]
+          ],
+          "transactions": 2103
         }
       },
       "freshness": {

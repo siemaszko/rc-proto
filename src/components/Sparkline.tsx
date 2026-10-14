@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
-export function Sparkline({ points, className, drawIn }: { points: number[]; className?: string; drawIn?: boolean }) {
+export function Sparkline({
+  points, className, drawIn, strokeWidth = 1.5, area,
+}: { points: number[]; className?: string; drawIn?: boolean; strokeWidth?: number; area?: boolean }) {
   const ref = useRef<SVGSVGElement>(null);
   const [len, setLen] = useState<number | null>(null);
   const [drawn, setDrawn] = useState(false);
@@ -22,13 +24,15 @@ export function Sparkline({ points, className, drawIn }: { points: number[]; cla
   const drawing = drawIn && !drawn && len !== null;
   return (
     <svg ref={ref} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className={className} aria-hidden="true">
+      {/* A 6% wash under the line in the same colour. */}
+      {area && <path d={`${d}L${W},${H}L0,${H}Z`} fill="currentColor" fillOpacity={0.06} stroke="none" />}
       <path
         d={d}
         className={drawing ? "spark-draw" : undefined}
         style={drawing ? ({ "--spark-len": Math.ceil(len) } as React.CSSProperties) : drawIn && !drawn ? { opacity: 0 } : undefined}
         // Drop the dash once drawn so a new period's longer line is not clipped.
         onAnimationEnd={() => setDrawn(true)}
-        fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"
+        fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"
       />
     </svg>
   );
