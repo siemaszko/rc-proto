@@ -152,35 +152,36 @@ check((await page.getByText("No data yet").count()) === 0, "sample data fills th
 await shot("state-new-project-sample.png", { fullPage: true });
 await page.getByRole("switch").click();
 
-// 6. New project, Proposed: onboarding block; a task opens the drawer; Mark as done counts.
-const onboarding = page.getByRole("region", { name: "Onboarding" });
-check((await onboarding.getByRole("article").count()) === 4, "4 open onboarding tasks");
-await onboarding.getByText("(2 of 6)").waitFor();
-await onboarding.getByRole("button", { name: "Install SDK" }).click();
+// 6. New project, Proposed: setup checklist; a step opens the drawer; Mark done counts.
+await page.getByRole("button", { name: "Install the SDK and configure Purchases" }).click();
 await drawer.waitFor();
 await page.waitForTimeout(250);
 await shot("06-new-project-setup-drawer.png");
-await drawer.getByRole("button", { name: /Install SDK/ }).click();
-await page.getByText("Would open SDK installation").waitFor();
+await drawer.getByRole("button", { name: /^Open / }).click();
+await page.getByText("Would open API keys").waitFor();
 await drawer.getByRole("checkbox").click();
 await page.keyboard.press("Escape");
-await onboarding.getByText("(3 of 6)").waitFor();
-check((await onboarding.getByRole("article").count()) === 3, "done task leaves the carousel");
-await onboarding.getByRole("button", { name: "Show completed" }).click();
-check((await onboarding.getByRole("article").count()) === 6, "Show completed reveals all 6");
-await onboarding.getByRole("button", { name: "Hide completed" }).click();
-await onboarding.getByRole("button", { name: "Mark as done" }).first().click();
-await onboarding.getByText("(4 of 6)").waitFor();
+await page.getByText("3 of 6 done").waitFor();
 
 // 10. Today, New project: the faithful "before" (onboarding block, Rico bar, 6 cards at 0).
 await page.getByRole("tab", { name: "Today" }).click();
 await page.waitForTimeout(300);
-await page.getByRole("region", { name: "Onboarding" }).getByText("(4 of 6)").waitFor(); // same tasks as Proposed
-await page.getByText("No live transactions to show").waitFor();
-await page.getByRole("region", { name: "Onboarding" }).getByRole("button", { name: "Configure sandbox access" }).click();
-await page.getByText("Would open Sandbox access").waitFor();
-await page.waitForTimeout(4500); // let the toast go before the screenshot
-await shot("10-today-new-project.png", { fullPage: true });
+{
+  const onboarding = page.getByRole("region", { name: "Onboarding" });
+  await onboarding.getByText("(2 of 6)").waitFor(); // its own state, not the Proposed checklist's
+  check((await onboarding.getByRole("article").count()) === 4, "4 open onboarding tasks");
+  await page.getByText("No live transactions to show").waitFor();
+  await onboarding.getByRole("button", { name: "Configure sandbox access" }).click();
+  await page.getByText("Would open Sandbox access").waitFor();
+  await onboarding.getByRole("button", { name: "Show completed" }).click();
+  check((await onboarding.getByRole("article").count()) === 6, "Show completed reveals all 6");
+  await onboarding.getByRole("button", { name: "Hide completed" }).click();
+  await page.waitForTimeout(4500); // let the toast go before the screenshot
+  await shot("10-today-new-project.png", { fullPage: true });
+  await onboarding.getByRole("button", { name: "Mark as done" }).first().click();
+  await onboarding.getByText("(3 of 6)").waitFor();
+  check((await onboarding.getByRole("article").count()) === 3, "done task leaves the carousel");
+}
 await page.getByRole("tab", { name: "Proposed" }).click();
 await setState("Normal");
 await page.getByRole("button", { name: "Not on this page, and why →" }).click();

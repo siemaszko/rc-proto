@@ -18,6 +18,9 @@ export type Onboarding = { title: string; subtitle: string; tasks: OnboardingTas
 
 export type Overview = typeof normal & {
   sample?: boolean;
+  /** New project, Proposed view: the setup checklist. */
+  setup?: { done: number; steps: { label: string; done: boolean }[] };
+  /** New project, Today view: RevenueCat's onboarding block. */
   onboarding?: Onboarding;
 };
 export type CardData = Overview["cards"][number];

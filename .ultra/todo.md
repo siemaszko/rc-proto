@@ -37,3 +37,4 @@
 - [x] Today: block + Rico bar + cards at 0 + "No live transactions to show"
 - [x] Proposed: block opens the task drawer; Mark as done shared; phone stacks
 - [x] Screenshots 05, 06, 10 (Rico shots to 12, 13), README, deploy
+- [x] Proposed New project back to the round 2 setup checklist; onboarding block is Today-only

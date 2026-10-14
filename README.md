@@ -46,18 +46,18 @@ Push to `main` deploys to Netlify.
   "Add card", same logic as (+)), "mrr", "trial", "right/correct/trust", else a default. MRR
   and trial replies have a button to the chart modal. "Ask Rico why" on a What changed tile
   opens the chat with the tile's sentence as your message.
-- **New project** (round 7): both views open with RevenueCat's real onboarding block, from
-  `onboarding` in new_project.json: progress ring, "Let's get you ready… (2 of 6)", "Mark all
-  as done", "Show completed" / "Hide completed", and a snap-scrolling carousel of the open
-  tasks (stacked on a phone). The task cards differ by view: **Today** has wide cards that
-  stretch, no illustrations and one footer row, like the real page; **Proposed** keeps the
-  round 7 cards (placeholder illustration with a lucide icon, three per row).
-  "Mark as done" moves a task to completed in both views (one shared state). In **Today**
-  the buttons are toasts ("Would open <flow>"), followed by the old Rico bar, the 6 cards at
-  0 and "No live transactions to show": the faithful before. In **Proposed** the title and
-  primary button open the task drawer (steps, a code snippet for the SDK, the flow button,
-  "Mark as done"); below it the 4 cards stay empty until "Show sample data" is on, and the
-  sparklines then draw in (600ms, ease-out).
+- **New project**, two separate designs with separate data and state:
+  - **Today** (round 7): RevenueCat's real onboarding block from `onboarding` in
+    new_project.json: progress ring, "Let's get you ready… (2 of 6)", "Mark all as done",
+    "Show completed" / "Hide completed", and a snap-scrolling carousel of wide task cards
+    that stretch (no illustrations, one footer row; stacked on a phone). Buttons are toasts
+    ("Would open <flow>"). Then the old Rico bar, the 6 cards at 0 and "No live transactions
+    to show": the faithful before.
+  - **Proposed** (round 2): the "Finish setting up your project" checklist from `setup`
+    (2 of 6 done); each step opens the task drawer with numbered steps, a code snippet for the
+    SDK step, "Open <flow>" (toast stub) and a "Mark done" checkbox that updates the list.
+    The 4 cards stay empty ("—", "No data yet") until "Show sample data" is on; then they fill
+    with watermarked sample values and the sparklines draw in (600ms, ease-out).
 - **Card**: label, (i) definition popover (Active subscriptions adds incl./excl. cancelled
   counts), big number, delta vs previous period (Churn going up is red),
   28-point sparkline in the delta color, window and freshness line, Open chart / View rows.
@@ -113,13 +113,12 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **"Card swapping / custom layout"** stays in "Not on this page": (+) adds from a fixed list
   of five, it doesn't rearrange or swap the defaults.
 - **Screenshot numbering** follows the briefs: 08 (+) picker, 09 What changed tiles, 10 Today
-  in New project; the Rico mascot and drag shots moved to 12 and 13. 05 is now the phone in
-  New project (onboarding stacked); the Normal phone page is `phone-full.png`.
-- **Today and Proposed are separate designs.** They share the onboarding data, header and
-  "Mark as done" state, but not the task cards (`TodayTaskCard`, `ProposedTaskCard`).
-  Today's cards drop the illustrations and stretch to fill the row, never under 440px: four
-  open tasks show about two and a bit and scroll, as on the real page, with one footer row
-  (buttons left, "Mark as done" right).
+  in New project; the Rico mascot and drag shots moved to 12 and 13. 05 is the phone in New
+  project (Proposed); the Normal phone page is `phone-full.png`.
+- **Today and Proposed are separate designs**, New project included: Today reads
+  `onboarding`, Proposed reads `setup`, and neither's "done" state touches the other.
+  Today's task cards drop the illustrations and stretch to fill the row, never under 440px:
+  four open tasks show about two and a bit and scroll, as on the real page.
 - **"Business" tag** is indigo (the page's one accent) rather than a separate blue.
 - **Dialog backdrop blur removed** so the What changed strip stays readable behind the
   chart modal in screenshot 4.

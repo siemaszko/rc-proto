@@ -1335,6 +1335,35 @@
     "current": 0
   },
   "recent_transactions": [],
+  "setup": {
+    "done": 2,
+    "steps": [
+      {
+        "label": "Create a project",
+        "done": true
+      },
+      {
+        "label": "Add your app",
+        "done": true
+      },
+      {
+        "label": "Install the SDK and configure Purchases",
+        "done": false
+      },
+      {
+        "label": "Add products and an entitlement",
+        "done": false
+      },
+      {
+        "label": "Make a sandbox purchase",
+        "done": false
+      },
+      {
+        "label": "Connect App Store Server Notifications",
+        "done": false
+      }
+    ]
+  },
   "onboarding": {
     "title": "Let's get you ready to start using RevenueCat.",
     "subtitle": "There are a few more things required before you can start selling inside your app.",

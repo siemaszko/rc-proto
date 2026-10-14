@@ -217,7 +217,19 @@ const newProject = file("new_project", scenario(1234, {
   what_changed: [],
   volume_gate: { threshold_tx_per_week: 10, current: 0 },
   recent_transactions: [],
-  // RevenueCat's onboarding block on an empty project, as seen on 14 Oct. Read by both views.
+  // Proposed: the round 2 setup checklist (opens the task drawer).
+  setup: {
+    done: 2,
+    steps: [
+      { label: "Create a project", done: true },
+      { label: "Add your app", done: true },
+      { label: "Install the SDK and configure Purchases", done: false },
+      { label: "Add products and an entitlement", done: false },
+      { label: "Make a sandbox purchase", done: false },
+      { label: "Connect App Store Server Notifications", done: false },
+    ],
+  },
+  // Today: RevenueCat's onboarding block on an empty project, as seen on 14 Oct.
   // primary / secondary: { label, flow } where flow names what the stub toast would open.
   onboarding: {
     title: "Let's get you ready to start using RevenueCat.",
