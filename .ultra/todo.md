@@ -5,6 +5,7 @@
 - [x] Local run via `netlify dev` verified
 - [x] Create Netlify site (team Petit) and deploy preview
 - [x] Deploy to production — https://rc-proto.netlify.app
+- [x] GitHub repo (siemaszko/rc-proto, public) with Netlify deploys on push to `main`
 
 ## Next
 - [ ] Write the spec
