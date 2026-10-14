@@ -117,8 +117,11 @@ function LineChart({ cur, prev, unit, start, end }: { cur: number[]; prev: numbe
 }
 
 export function ChartModal({
-  ctx, card, preset, open, onOpenChange, onViewRows,
-}: { ctx: Ctx | null; card: CardData | null; preset: Preset; open: boolean; onOpenChange: (o: boolean) => void; onViewRows: () => void }) {
+  ctx, card, preset, rowsCount, open, onOpenChange, onViewRows,
+}: {
+  ctx: Ctx | null; card: CardData | null; preset: Preset; rowsCount: number;
+  open: boolean; onOpenChange: (o: boolean) => void; onViewRows: () => void;
+}) {
   const p = card?.by_period[preset] as (CardData["by_period"]["28d"] & { prev_value: number; sparkline_prev: number[] }) | undefined;
   const now = card?.row === "now";
   const up = (p?.delta_pct ?? 0) > 0, down = (p?.delta_pct ?? 0) < 0;
@@ -166,7 +169,7 @@ export function ChartModal({
             <div className="flex flex-col-reverse gap-3 border-t border-neutral-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-xs text-neutral-400">Same definition as Charts v3</span>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={onViewRows}><Rows3 /> View rows (200)</Button>
+                <Button variant="outline" onClick={onViewRows}><Rows3 /> View rows ({formatValue(rowsCount, "count")})</Button>
                 <Button className="bg-indigo-600 text-white hover:bg-indigo-700" onClick={() => toast(`Would open Charts → ${ctx.metric} with this period and cutoff`)}>
                   Open in Charts <ArrowRight />
                 </Button>

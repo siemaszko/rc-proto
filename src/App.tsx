@@ -20,6 +20,7 @@ import { AddCard, MAX_EXTRA, OPTIONAL_CARDS, type OptionalCardId } from "@/compo
 import { RicoDrawer, SetupDrawer } from "@/components/Drawers";
 import { RicoLauncher } from "@/components/Rico";
 import { ExperimentModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
+import type { RowKind } from "@/lib/rows";
 import { ChartModal } from "@/components/ChartModal";
 import { dateTimeUtc, formatValue, fullDaysLabel, presetDays } from "@/lib/format";
 import type { CardData, ChartTarget, Overview, Preset, StateKey, View } from "@/types";
@@ -71,6 +72,18 @@ export default function App() {
     setChart({ metric, definition: card?.definition, cardId: card?.id });
     setChartOpen(true);
   };
+  // What "View rows" lists for a card, and how many: MRR's rows are the active subscriptions,
+  // Revenue's are its transactions.
+  const rowsFor = (cardId?: string): { kind: RowKind; count: number } => {
+    const value = (id: string) => allCards.find((c) => c.id === id)!.by_period[preset].value;
+    if (cardId === "active_subscriptions" || cardId === "mrr" || cardId === "churn") return { kind: "subscriptions", count: value("active_subscriptions") };
+    if (cardId === "active_trials" || cardId === "trial_conversion") return { kind: "trials", count: value("active_trials") };
+    if (cardId === "revenue") return { kind: "transactions", count: (data.cards.find((c) => c.id === "revenue")!.by_period[preset] as { transactions?: number }).transactions ?? 0 };
+    if (cardId === "new_customers" || cardId === "active_customers") return { kind: "customers", count: value(cardId) };
+    return { kind: "customers", count: value("active_customers") };
+  };
+  const rows = rowsFor(chart?.cardId);
+
   const openMetricRows = (metric: string) => {
     const card = allCards.find((c) => c.label === metric);
     setChart({ metric, definition: card?.definition, cardId: card?.id });
@@ -208,16 +221,17 @@ export default function App() {
                 </section>
 
                 <WhatChanged
-                      data={data}
-                      cardIds={data.cards.map((c) => c.id)}
-                      labelFor={labelFor}
-                      onAction={(item) => {
-                        if (item.action.type === "experiment") return setExperimentOpen(true);
-                        if (item.action.type === "explainer") return setExplainerOpen(true);
-                        openMetric(labelFor(item.card_id));
-                      }}
-                      onAskRico={(item) => askRico(`${labelFor(item.card_id)}: ${item.text}`)}
-                    />
+                  data={data}
+                  preset={preset}
+                  cardIds={data.cards.map((c) => c.id)}
+                  labelFor={labelFor}
+                  onAction={(item) => {
+                    if (item.action.type === "experiment") return setExperimentOpen(true);
+                    if (item.action.type === "explainer") return setExplainerOpen(true);
+                    openMetric(labelFor(item.cardId));
+                  }}
+                  onAskRico={(item) => askRico(`${labelFor(item.cardId)}: ${item.text}`)}
+                />
 
                 <RecentTransactions rows={data.recent_transactions} collapsible />
                 <DesignRules onNotOnPage={() => setNotOnPageOpen(true)} />
@@ -253,8 +267,9 @@ export default function App() {
         ctx={ctx}
         card={allCards.find((c) => c.id === chart?.cardId) ?? null}
         preset={preset}
+        rowsCount={rows.count}
         open={chartOpen} onOpenChange={setChartOpen} onViewRows={() => { setChartOpen(false); setRowsOpen(true); }} />
-      <RowsModal ctx={ctx} open={rowsOpen} onOpenChange={setRowsOpen} />
+      <RowsModal ctx={ctx} cardId={chart?.cardId ?? ""} kind={rows.kind} count={rows.count} open={rowsOpen} onOpenChange={setRowsOpen} />
       <NotOnPageModal open={notOnPageOpen} onOpenChange={setNotOnPageOpen} />
       <ExplainerModal open={explainerOpen} onOpenChange={setExplainerOpen} />
       <ExperimentModal open={experimentOpen} onOpenChange={setExperimentOpen} />

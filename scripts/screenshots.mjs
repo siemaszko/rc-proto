@@ -102,6 +102,20 @@ await page.waitForTimeout(150);
   await shot("09-what-changed-tiles.png", { clip: { x: t.x - 16, y: t.y - 16, width: t.width + 32, height: t.height + 32 } });
 }
 check((await tiles.getByRole("article").count()) === 4, "four tiles");
+check((await tiles.getByRole("button", { name: "Ask Rico why" }).count()) === 2, "Rico only on the two Open chart tiles (28d)");
+check((await page.getByText("carried over from Overview").count()) === 0, "no carried-over chip");
+// The header picker drives the tiles.
+{
+  const period = page.getByRole("combobox", { name: "Period" });
+  await period.click();
+  await page.getByRole("option", { name: "Last 7 days" }).click();
+  await tiles.getByText("Up 1.4%, 9 new annual subs").waitFor();
+  await tiles.getByText("last 7 full days").waitFor();
+  check((await tiles.getByRole("button", { name: "Ask Rico why" }).count()) === 3, "7d: Revenue tile turns to Open chart, with Rico");
+  await period.click();
+  await page.getByRole("option", { name: "Last 28 days" }).click();
+  await tiles.getByText("Up 6.1%, 31 new annual subs").waitFor();
+}
 {
   // Each tile shares its card's column at 1280px.
   const cards = page.getByRole("region", { name: "Key numbers" }).locator("[data-slot=card]");
@@ -167,7 +181,16 @@ await page.waitForTimeout(300);
 await mascot.click();
 await drawer.waitFor();
 await drawer.getByRole("button", { name: "View rows" }).last().click();
-await page.getByRole("dialog", { name: /MRR · Rows/ }).waitFor();
+{
+  const rowsDialog = page.getByRole("dialog", { name: "MRR" });
+  await rowsDialog.getByText("412 subscriptions · as of 14 Oct, 19:42 UTC").waitFor();
+  check((await rowsDialog.locator("tbody tr").count()) === 10, "rows modal shows 10 rows");
+  await rowsDialog.getByText("Showing 10 of 412").waitFor();
+  await page.waitForTimeout(250);
+  await shot("rows-modal.png");
+  await rowsDialog.getByRole("button", { name: "Export CSV" }).click();
+  await page.getByText("Would email the export").waitFor();
+}
 await page.keyboard.press("Escape");
 await page.waitForTimeout(300);
 await mascot.click();

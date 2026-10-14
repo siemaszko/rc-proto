@@ -46,6 +46,7 @@ function flowSeries(rand, { mean, trend, noise, weekly }) {
   });
 }
 
+const perPreset = (v) => Object.fromEntries(Object.keys(PRESETS).map((k) => [k, v]));
 const sum = (a) => a.reduce((s, x) => s + x, 0);
 const pct = (now, prev) => (prev ? Math.round(((now - prev) / prev) * 1000) / 10 : 0);
 const downsample = (a, n = 28) => (a.length <= n ? a : Array.from({ length: n }, (_, i) => a[Math.round((i * (a.length - 1)) / (n - 1))]));
@@ -197,13 +198,26 @@ const normal = file("normal", scenario(42, {
   newCustomers: { mean: 41, trend: 0.2, noise: 0.5, weekly: 0.15 },
   churned: { mean: 1.6, trend: 0, noise: 0.8, weekly: 0 },
 }), { conversion: [31, 38, 3], churn: [4.2, 3.9, 0.6], ltv: [38, 36, 2] }, [412, 388], {
-  // One item per default card, in card order. action.type: "chart" opens the chart modal for
-  // that card, "experiment" and "explainer" open stubs. Text stays under 60 characters.
+  // One item per default card, in card order. text, direction and action are keyed by preset,
+  // so the header's period picker drives the tiles. action.type: "chart" opens the chart
+  // modal for that card, "experiment" and "explainer" open stubs. Text stays under 60 characters.
   what_changed: [
-    { card_id: "mrr", direction: "up", text: "Up 6.1%, 31 new annual subs", kind: "business", action: { label: "Open chart", type: "chart" } },
-    { card_id: "active_subscriptions", direction: "flat", text: "Flat. 12 cancellations, 14 new", kind: "business", action: { label: "Open chart", type: "chart" } },
-    { card_id: "active_trials", direction: "down", text: "Down 10%. Trial-to-paid 38% → 31%", kind: "business", action: { label: "Test a new paywall", type: "experiment" } },
-    { card_id: "revenue", direction: "info", text: "Restated 1–6 Oct, v3 definitions", kind: "definition", action: { label: "Read explainer", type: "explainer" } },
+    { card_id: "mrr", kind: "business",
+      text: { "7d": "Up 1.4%, 9 new annual subs", "28d": "Up 6.1%, 31 new annual subs", "90d": "Up 14%, 88 new annual subs" },
+      direction: { "7d": "up", "28d": "up", "90d": "up" },
+      action: perPreset({ label: "Open chart", type: "chart" }) },
+    { card_id: "active_subscriptions", kind: "business",
+      text: { "7d": "Flat. 3 cancellations, 4 new", "28d": "Flat. 12 cancellations, 14 new", "90d": "Up 3%. 41 cancellations, 53 new" },
+      direction: { "7d": "flat", "28d": "flat", "90d": "up" },
+      action: perPreset({ label: "Open chart", type: "chart" }) },
+    { card_id: "active_trials", kind: "business",
+      text: { "7d": "Down 4%. Trial-to-paid 35% → 31%", "28d": "Down 10%. Trial-to-paid 38% → 31%", "90d": "Down 18%. Trial-to-paid 41% → 31%" },
+      direction: { "7d": "down", "28d": "down", "90d": "down" },
+      action: perPreset({ label: "Test a new paywall", type: "experiment" }) },
+    { card_id: "revenue", kind: "definition",
+      text: { "7d": "No definition changes this week", "28d": "Restated 1–6 Oct, v3 definitions", "90d": "Restated 1–6 Oct, v3 definitions" },
+      direction: { "7d": "flat", "28d": "info", "90d": "info" },
+      action: { "7d": { label: "Open chart", type: "chart" }, "28d": { label: "Read explainer", type: "explainer" }, "90d": { label: "Read explainer", type: "explainer" } } },
   ],
   volume_gate: { threshold_tx_per_week: 10, current: 84 },
   recent_transactions: transactions(42, 10, PRODUCTS),

@@ -50,3 +50,7 @@
 - [x] C. What changed tiles at 120px under the cards
 - [x] D. Chart modal with drawn SVG chart vs previous period
 - [x] E. Rico chips and replies, gray origin circle when dragging
+
+## Round 10: What changed + rows modal (30 min box)
+- [x] Tiles: metric label, icon by the sentence, period-driven copy, Rico only on Open chart
+- [x] Rows modal with a 10-row mock table; no carried-over chip

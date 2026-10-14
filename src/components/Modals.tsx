@@ -1,7 +1,17 @@
-import { Clock } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { mockRows, type RowKind } from "@/lib/rows";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { dateRange, dateTimeUtc } from "@/lib/format";
+import { dateRange, dateTimeUtc, formatMoney, formatValue } from "@/lib/format";
+
+const STATUS = {
+  Active: "bg-emerald-50 text-emerald-700",
+  Trial: "bg-indigo-50 text-indigo-700",
+  Cancelled: "bg-neutral-100 text-neutral-600",
+} as const;
 
 export type Ctx = { metric: string; periodLabel: string; start: string; end: string; asOf: string };
 
@@ -11,28 +21,62 @@ export function Context({ periodLabel, start, end, asOf }: Ctx) {
       <dt className="text-neutral-500">Period</dt>
       <dd className="text-neutral-900">{periodLabel} · {dateRange(start, end)}</dd>
       <dt className="text-neutral-500">As of</dt>
-      <dd className="flex flex-wrap items-center gap-2 text-neutral-900">
-        {dateTimeUtc(asOf)}
-        <Badge className="bg-indigo-50 text-indigo-700">carried over from Overview</Badge>
-      </dd>
+      <dd className="text-neutral-900">{dateTimeUtc(asOf)}</dd>
     </dl>
   );
 }
 
-export function RowsModal({ ctx, open, onOpenChange }: { ctx: Ctx | null; open: boolean; onOpenChange: (o: boolean) => void }) {
+// The rows behind a card: ten mock rows of the right kind, with the same cutoff as the card.
+export function RowsModal({
+  ctx, cardId, kind, count, open, onOpenChange,
+}: { ctx: Ctx | null; cardId: string; kind: RowKind; count: number; open: boolean; onOpenChange: (o: boolean) => void }) {
+  const rows = ctx ? mockRows(cardId, kind, ctx.asOf) : [];
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="grid-cols-1 gap-4 p-6 sm:max-w-3xl">
         {ctx && (
           <>
             <DialogHeader>
-              <DialogTitle>{ctx.metric} · Rows (stub)</DialogTitle>
-              <DialogDescription>The 200 customers and transactions behind this number, filtered to the same period and cutoff.</DialogDescription>
+              <DialogTitle className="text-lg">{ctx.metric}</DialogTitle>
+              <DialogDescription className="text-neutral-500">
+                {formatValue(count, "count")} {kind} · as of {dateTimeUtc(ctx.asOf)}
+              </DialogDescription>
             </DialogHeader>
-            <Context {...ctx} />
-            <p className="flex items-center gap-2 text-xs text-neutral-500">
-              <Clock className="size-3.5" /> Rows match the card exactly because they share one cutoff.
-            </p>
+            <div className="min-w-0 overflow-x-auto rounded-lg border border-neutral-200">
+              <Table className="min-w-[680px] text-[13px]">
+                <TableHeader>
+                  <TableRow className="bg-neutral-50 hover:bg-neutral-50">
+                    {["App user ID", "Product", "Store", "Status", "Started", "Expires", "Revenue"].map((h) => (
+                      <TableHead key={h} className={cn("h-9 px-3 text-xs text-neutral-500", h === "Revenue" && "text-right")}>{h}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((r) => (
+                    <TableRow key={r.user}>
+                      <TableCell className="max-w-[170px] truncate px-3 font-mono text-xs text-neutral-600">{r.user}</TableCell>
+                      <TableCell className="px-3 text-neutral-800">{r.product}</TableCell>
+                      <TableCell className="px-3 text-neutral-600">{r.store}</TableCell>
+                      <TableCell className="px-3">
+                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", STATUS[r.status])}>{r.status}</span>
+                      </TableCell>
+                      <TableCell className="px-3 text-neutral-600 tabular-nums">{r.started}</TableCell>
+                      <TableCell className="px-3 text-neutral-600 tabular-nums">{r.expires}</TableCell>
+                      <TableCell className="px-3 text-right text-neutral-800 tabular-nums">{formatMoney(r.revenue)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-xs text-neutral-400">Showing {rows.length} of {formatValue(count, "count")}</span>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => toast("Would email the export")}><Download /> Export CSV</Button>
+                <Button className="bg-indigo-600 text-white hover:bg-indigo-700" onClick={() => toast(`Would open Customers filtered to these ${kind}`)}>
+                  Open in Customers <ArrowRight />
+                </Button>
+              </div>
+            </div>
           </>
         )}
       </DialogContent>

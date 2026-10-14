@@ -27,9 +27,11 @@ Push to `main` deploys to Netlify.
   delta). A line with "+ Add a card" (adds up to two of New customers, Active customers, Trial
   conversion, Churn, Realized LTV, removable, in memory only; they go to a second row), then
   one row of four cards: MRR, Active subscriptions, Active trials, Revenue (4 columns, 2x2 on
-  a tablet, 1 on a phone). **What changed**: four tiles in the same grid, each under its card
-  (icon + tag, a sentence of at most two lines, the action link, and a 28px Rico button that
-  pre-fills the chat with the sentence); below the volume gate four muted tiles. Recent
+  a tablet, 1 on a phone). **What changed** (round 10): four tiles in the same grid, each
+  under its card, driven by the header's period picker (copy, direction and action per
+  7d/28d/90d; subtitle "last N full days"). Each tile: metric label + tag; icon + a sentence
+  of at most two lines; the action link, plus a 28px Rico button that pre-fills the chat only
+  where the action is "Open chart". Below the volume gate four muted tiles. Recent
   transactions (collapsed); footer with the 3 design rules and "Not on this page, and why".
 - **Rico mascot** (round 5): an indigo blob whose eyes are holes in the body, drawn with the
   [bloub](https://github.com/jeremy-prt/bloub) engine (MIT, vendored in `src/vendor/bloub`,
@@ -66,13 +68,18 @@ Push to `main` deploys to Netlify.
   through 13 Oct"). No links on the face: the whole card opens the chart, and an arrow fades in
   top-right on hover (always shown on touch). The (i) is a trust panel: definition, "Same
   definition as Charts v3", incl./excl. cancelled for Active subscriptions, and "See the 412
-  subscriptions behind this number →" (rows stub; trials, MRR and Revenue's 1,203
+  subscriptions behind this number →" (opens the rows; trials, MRR and Revenue's 1,203
   transactions get their own wording).
-- **Chart modal** (round 9): metric, definition, period and carried-over cutoff, then an
+- **Rows modal** (round 10): "412 subscriptions · as of 14 Oct, 19:42 UTC" and a table of 10
+  mock rows (App user ID, Product, Store, Status chip, Started, Expires, Revenue), seeded by
+  the card so they never change: subscriptions for Active subscriptions and MRR, trials for
+  Active trials, transactions for Revenue. "Showing 10 of 412", "Export CSV" and "Open in
+  Customers" (toasts).
+- **Chart modal** (round 9): metric, definition, period and cutoff (no chip since round 10), then an
   inline SVG chart (no library) of this period (solid indigo, light fill) against the
   previous one (dashed), three round gridlines, first/middle/last dates, a hover guide with
   "30 Sep · $4,962 · prev $4,620", a legend, and Start/End/Change (or Previous/This
-  period/Change for period cards) from the data. "View rows (200)" and "Open in Charts →"
+  period/Change for period cards) from the data. "View rows (412)" (the card's row count) and "Open in Charts →"
   (toast). Full-screen sheet on a phone. `sparkline_prev` and `prev_value` per period come
   from the same series as the delta, so the dashed line and the change always agree.
 - **Today**: the "before": Rico bar, 6 plain cards, recent transactions table (unchanged;

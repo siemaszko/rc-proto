@@ -2289,42 +2289,114 @@
   "what_changed": [
     {
       "card_id": "mrr",
-      "direction": "up",
-      "text": "Up 6.1%, 31 new annual subs",
       "kind": "business",
+      "text": {
+        "7d": "Up 1.4%, 9 new annual subs",
+        "28d": "Up 6.1%, 31 new annual subs",
+        "90d": "Up 14%, 88 new annual subs"
+      },
+      "direction": {
+        "7d": "up",
+        "28d": "up",
+        "90d": "up"
+      },
       "action": {
-        "label": "Open chart",
-        "type": "chart"
+        "7d": {
+          "label": "Open chart",
+          "type": "chart"
+        },
+        "28d": {
+          "label": "Open chart",
+          "type": "chart"
+        },
+        "90d": {
+          "label": "Open chart",
+          "type": "chart"
+        }
       }
     },
     {
       "card_id": "active_subscriptions",
-      "direction": "flat",
-      "text": "Flat. 12 cancellations, 14 new",
       "kind": "business",
+      "text": {
+        "7d": "Flat. 3 cancellations, 4 new",
+        "28d": "Flat. 12 cancellations, 14 new",
+        "90d": "Up 3%. 41 cancellations, 53 new"
+      },
+      "direction": {
+        "7d": "flat",
+        "28d": "flat",
+        "90d": "up"
+      },
       "action": {
-        "label": "Open chart",
-        "type": "chart"
+        "7d": {
+          "label": "Open chart",
+          "type": "chart"
+        },
+        "28d": {
+          "label": "Open chart",
+          "type": "chart"
+        },
+        "90d": {
+          "label": "Open chart",
+          "type": "chart"
+        }
       }
     },
     {
       "card_id": "active_trials",
-      "direction": "down",
-      "text": "Down 10%. Trial-to-paid 38% → 31%",
       "kind": "business",
+      "text": {
+        "7d": "Down 4%. Trial-to-paid 35% → 31%",
+        "28d": "Down 10%. Trial-to-paid 38% → 31%",
+        "90d": "Down 18%. Trial-to-paid 41% → 31%"
+      },
+      "direction": {
+        "7d": "down",
+        "28d": "down",
+        "90d": "down"
+      },
       "action": {
-        "label": "Test a new paywall",
-        "type": "experiment"
+        "7d": {
+          "label": "Test a new paywall",
+          "type": "experiment"
+        },
+        "28d": {
+          "label": "Test a new paywall",
+          "type": "experiment"
+        },
+        "90d": {
+          "label": "Test a new paywall",
+          "type": "experiment"
+        }
       }
     },
     {
       "card_id": "revenue",
-      "direction": "info",
-      "text": "Restated 1–6 Oct, v3 definitions",
       "kind": "definition",
+      "text": {
+        "7d": "No definition changes this week",
+        "28d": "Restated 1–6 Oct, v3 definitions",
+        "90d": "Restated 1–6 Oct, v3 definitions"
+      },
+      "direction": {
+        "7d": "flat",
+        "28d": "info",
+        "90d": "info"
+      },
       "action": {
-        "label": "Read explainer",
-        "type": "explainer"
+        "7d": {
+          "label": "Open chart",
+          "type": "chart"
+        },
+        "28d": {
+          "label": "Read explainer",
+          "type": "explainer"
+        },
+        "90d": {
+          "label": "Read explainer",
+          "type": "explainer"
+        }
       }
     }
   ],
