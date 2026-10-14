@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FlaskConical, Info } from "lucide-react";
+import { FlaskConical, Info, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import normalData from "@/data/normal.json";
 import lowVolumeData from "@/data/low_volume.json";
 import newProjectData from "@/data/new_project.json";
@@ -12,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Sidebar, TopBar } from "@/components/Shell";
 import { MetricCard, PlainCard } from "@/components/MetricCard";
 import { DesignRules, RecentTransactions, RicoBar, SectionTitle, SetupChecklist, WhatChanged } from "@/components/Sections";
-import { RicoDrawer, RicoInput, SetupDrawer } from "@/components/Drawers";
+import { RicoDrawer, SetupDrawer } from "@/components/Drawers";
 import { ChartModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
 import { dateTimeUtc, periodLabel } from "@/lib/format";
 import type { CardData, ChartTarget, Overview, Preset, StateKey, View } from "@/types";
@@ -73,27 +74,7 @@ export default function App() {
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar />
 
-          {/* Prototype controls: not part of the product UI. */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-dashed border-neutral-300 bg-white px-4 py-2 md:px-8">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-neutral-500"><FlaskConical className="size-3.5" /> Prototype</span>
-            <Tabs value={view} onValueChange={(v) => setView(v as View)}>
-              <TabsList>
-                <TabsTrigger value="today">Today</TabsTrigger>
-                <TabsTrigger value="proposed">Proposed</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-neutral-500">State</span>
-              <Select items={STATES} value={stateKey} onValueChange={(v) => setStateKey(v as StateKey)}>
-                <SelectTrigger size="sm" className="w-[170px] bg-white"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(STATES).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 py-6 md:px-8">
+          <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 pt-6 pb-24 md:px-8">
             <header className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-xl font-semibold">Overview</h1>
@@ -111,17 +92,9 @@ export default function App() {
                 </Select>
               </div>
               {view === "proposed" && (
-                <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-                  Data as of {dateTimeUtc(data.as_of)}
-                  <Popover>
-                    <PopoverTrigger aria-label="About the data cutoff" className="rounded p-0.5 text-neutral-400 hover:text-neutral-700">
-                      <Info className="size-3.5" />
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-64 p-3 text-xs text-neutral-700">
-                      All cards on this page use this cutoff. Cached cards show their own time.
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <Button variant="link" className="h-auto gap-1.5 p-0 text-indigo-600" onClick={() => setRicoOpen(true)}>
+                  <Sparkles /> Ask Rico about this page
+                </Button>
               )}
             </header>
 
@@ -137,19 +110,30 @@ export default function App() {
               </>
             ) : (
               <>
-                <RicoInput value={ricoDraft} onChange={setRicoDraft} onOpen={() => setRicoOpen(true)} />
-
                 {data.setup && <SetupChecklist steps={setupSteps} onOpenStep={(i) => { setSetupIndex(i); setSetupOpen(true); }} />}
 
                 <section className="flex flex-col gap-3">
-                  <div className="flex h-8 items-center justify-between gap-3">
+                  <div className="flex min-h-8 items-center justify-between gap-3">
                     <SectionTitle>Now</SectionTitle>
-                    {sample && (
-                      <label className="flex items-center gap-2 text-xs text-neutral-600">
-                        <Switch checked={showSample} onCheckedChange={setShowSample} />
-                        Show sample data
-                      </label>
-                    )}
+                    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+                      {sample && (
+                        <label className="flex items-center gap-2 text-xs text-neutral-600">
+                          <Switch checked={showSample} onCheckedChange={setShowSample} />
+                          Show sample data
+                        </label>
+                      )}
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+                        Data as of {dateTimeUtc(data.as_of)}
+                        <Popover>
+                          <PopoverTrigger aria-label="About the data cutoff" className="rounded p-0.5 text-neutral-400 hover:text-neutral-700">
+                            <Info className="size-3.5" />
+                          </PopoverTrigger>
+                          <PopoverContent align="end" className="w-64 p-3 text-xs text-neutral-700">
+                            All cards on this page use this cutoff. Cached cards show their own time.
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">{cardsFor("now")}</div>
                 </section>
@@ -180,6 +164,26 @@ export default function App() {
               </>
             )}
           </main>
+        </div>
+      </div>
+
+      {/* Prototype controls: not part of the product UI. A floating dock, dark tokens via .dark. */}
+      <div className="dark fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-neutral-100 shadow-lg shadow-neutral-900/20 md:left-[calc(50%+110px)]">
+        <span className="hidden items-center gap-1.5 text-xs font-medium text-neutral-400 sm:flex"><FlaskConical className="size-3.5" /> Prototype</span>
+        <Tabs value={view} onValueChange={(v) => setView(v as View)}>
+          <TabsList className="bg-neutral-900">
+            <TabsTrigger value="today" className="dark:data-active:bg-neutral-700">Today</TabsTrigger>
+            <TabsTrigger value="proposed" className="dark:data-active:bg-neutral-700">Proposed</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-neutral-400">State</span>
+          <Select items={STATES} value={stateKey} onValueChange={(v) => setStateKey(v as StateKey)}>
+            <SelectTrigger size="sm" className="w-[150px] sm:w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {Object.entries(STATES).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

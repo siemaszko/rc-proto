@@ -20,16 +20,17 @@ Push to `main` deploys to Netlify.
 
 ## What's in it
 
-- **Prototype bar** (dashed, above the page): Today / Proposed tabs and the State select
-  (Normal, Below volume gate, New project). State only swaps the JSON file.
-- **Proposed**: header with app selector and one "Data as of" cutoff; **Now** row
+- **Prototype dock** (dark, floating at the bottom): Today / Proposed tabs and the State
+  select (Normal, Below volume gate, New project). State only swaps the JSON file.
+- **Proposed**: header with app selector and an "Ask Rico about this page" link on the right;
+  **Now** row with the one "Data as of" cutoff on the right of its title
   (Active subscriptions, Active trials, MRR); **period** row (Revenue, New customers,
   Active customers) with the 7d / 28d / 90d picker; **What changed** strip (max 3, tagged
   Business or Definition / data); Recent transactions (collapsed); footer with the 3 design
   rules and "Not on this page, and why".
-- **Ask Rico** (round 2): one 40px input under the header, above Now, in every state. Click
-  or focus opens a 420px right drawer (full width on a phone) with the typed text carried
-  over, 3 prompt chips, and a mocked chat: replies after 600ms, keyed on "mrr", "trial",
+- **Ask Rico**: a text link in the header, in every state (round 3; round 2 had a 40px input
+  under the header). It opens a 420px right drawer (full width on a phone) with 3 prompt
+  chips and a mocked chat: replies after 600ms, keyed on "mrr", "trial",
   "right/correct/trust", else a default. MRR and trial replies have a button to the chart modal.
 - **New project** (round 2): the setup card lists 6 tasks (2 of 6 done); each opens the same
   drawer with numbered steps, a code snippet for the SDK step, "Open <flow>" (toast stub) and
@@ -68,9 +69,9 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **New project**: sample data is opt-in since round 2 (empty cards by default). Empty
   cards hide the window/freshness line and the chart/rows links too, so they show only
   label, dash and "No data yet". The first incomplete setup task is highlighted.
-- **Rico drawer closes without returning focus** to the page input, because focusing that
-  input opens the drawer again.
-- **Order in New project**: Rico input first (directly under the header), then the setup card.
+- **Rico drawer closes without returning focus** (kept from round 2, when focusing the page
+  input reopened the drawer).
+- **New project Now row**: "Show sample data" switch sits left of "Data as of".
 - **Below volume gate**: deltas and sparklines hidden with "Not enough data yet".
 - **"Business" tag** is indigo (the page's one accent) rather than a separate blue.
 - **Dialog backdrop blur removed** so the What changed strip stays readable behind the

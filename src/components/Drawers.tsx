@@ -21,23 +21,6 @@ export function SideDrawer({
 
 /* ---------- Rico ---------- */
 
-export function RicoInput({ value, onChange, onOpen }: { value: string; onChange: (v: string) => void; onOpen: () => void }) {
-  return (
-    <div className="flex h-10 items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 focus-within:border-indigo-300">
-      <Sparkles className="size-4 shrink-0 text-indigo-600" />
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={onOpen}
-        onClick={onOpen}
-        placeholder="Ask Rico about this page"
-        aria-label="Ask Rico about this page"
-        className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
-      />
-    </div>
-  );
-}
-
 export const RICO_CHIPS = ["Why did MRR go up?", "Is this number right?", "What should I look at today?"];
 
 type Message = { from: "me" | "rico"; text: string; chart?: { label: string; metric: string } };

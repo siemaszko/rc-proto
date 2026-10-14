@@ -55,14 +55,12 @@ const setState = async (state) => {
 };
 const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
 
-// 7. Rico drawer: input text carries over, a chip, a typed question, mocked replies.
+// 7. Rico drawer: a chip, a typed question, mocked replies.
 await page.evaluate(() => window.scrollTo(0, 0));
-const rico = page.getByRole("textbox", { name: "Ask Rico about this page" });
-await rico.pressSequentially("is ");
+await page.getByRole("button", { name: "Ask Rico about this page" }).click();
 const drawer = page.locator("[data-slot=sheet-content]");
 await drawer.waitFor();
 const msg = drawer.getByRole("textbox", { name: "Message Rico" });
-check((await msg.inputValue()) === "is ", "Rico draft carries over");
 await drawer.getByRole("button", { name: "Why did MRR go up?" }).click();
 await drawer.getByText("31 new annual subscriptions").waitFor();
 await msg.fill("Is this number right?");
@@ -113,7 +111,7 @@ await phone.evaluate(() => document.fonts.ready);
 await phone.screenshot({ path: OUT + "05-phone.png" });
 const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 await phone.screenshot({ path: OUT + "phone-full.png", fullPage: true });
-await phone.getByRole("textbox", { name: "Ask Rico about this page" }).click();
+await phone.getByRole("button", { name: "Ask Rico about this page" }).click();
 const phoneDrawer = await phone.locator("[data-slot=sheet-content]").boundingBox();
 check(Math.round(phoneDrawer.width) === 390, `phone drawer full width (${phoneDrawer.width}px)`);
 await phone.waitForTimeout(250);
