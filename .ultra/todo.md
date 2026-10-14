@@ -38,3 +38,8 @@
 - [x] Proposed: block opens the task drawer; Mark as done shared; phone stacks
 - [x] Screenshots 05, 06, 10 (Rico shots to 12, 13), README, deploy
 - [x] Proposed New project back to the round 2 setup checklist; onboarding block is Today-only
+
+## Round 8: visual pass on Proposed (40 min box)
+- [x] What changed: 4 tiles aligned under the 4 cards, Rico button pre-fills the chat, gated tiles
+- [x] Lighter KPI cards: delta chip, 36px sparkline, hover links
+- [x] Screenshots 02, 03, 09; README; deploy

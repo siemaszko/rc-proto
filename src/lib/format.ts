@@ -8,7 +8,6 @@ export const formatValue = (value: number, unit: string) =>
   unit === "USD" ? usd.format(value) : unit === "percent" ? `${value}%` : count.format(value);
 export const formatMoney = (value: number) => usdCents.format(value);
 
-export const formatDelta = (pct: number) => `${pct > 0 ? "+" : pct < 0 ? "−" : "±"}${Math.abs(pct).toFixed(1)}%`;
 
 export const presetDays: Record<Preset, number> = { "7d": 7, "28d": 28, "90d": 90 };
 export const periodLabel = (p: Preset) => `Last ${presetDays[p]} days`;

@@ -1,13 +1,12 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Info, X } from "lucide-react";
+import { ArrowRight, Info, Minus, Triangle, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Sparkline } from "@/components/Sparkline";
 import { cn } from "@/lib/utils";
-import { formatDelta, formatValue, presetDays, timeUtc } from "@/lib/format";
+import { formatValue, presetDays, timeUtc } from "@/lib/format";
 import type { CardData, Preset } from "@/types";
 
 type Props = {
@@ -46,7 +45,7 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
       tabIndex={0}
       onClick={onOpenChart}
       onKeyDown={(e) => e.key === "Enter" && onOpenChart()}
-      className="relative cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-4 shadow-none ring-0 hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
+      className="group/metric relative cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-4 shadow-none ring-0 hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
     >
       {sample && !empty && (
         <span aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-semibold tracking-widest text-neutral-900/[0.04] uppercase select-none -rotate-12">
@@ -96,31 +95,35 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
         </div>
       </div>
 
-      {/* Number, then the delta on its own line: four cards to a row leave no room side by side. */}
-      <div className="mt-2 flex flex-col gap-1">
+      {/* Number left, delta chip right on the same baseline; "vs prev" under the chip. */}
+      <div className="mt-1.5 flex items-start justify-between gap-2">
         <span className={cn("text-[28px] leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
           {empty ? "—" : formatValue(p.value, card.unit)}
         </span>
         {empty ? (
-          <span className="text-xs text-neutral-400">No data yet</span>
+          <span className="pt-1 text-xs text-neutral-400">No data yet</span>
         ) : gated ? (
-          <span className="text-xs text-neutral-400">Not enough data yet</span>
+          <span className="pt-1 text-right text-xs text-neutral-400">Not enough data yet</span>
         ) : (
-          <span className={cn("flex items-center gap-0.5 text-[13px] font-medium whitespace-nowrap tabular-nums", tone)}>
-            {up ? <ArrowUpRight className="size-3.5" /> : down ? <ArrowDownRight className="size-3.5" /> : null}
-            {formatDelta(p.delta_pct)}
-            <span className="ml-1 font-normal text-neutral-400">vs prev {presetDays[preset]}d</span>
+          <span className="flex shrink-0 flex-col items-end pt-0.5">
+            <span className={cn("flex items-center gap-0.5 text-[13px] leading-none font-medium whitespace-nowrap tabular-nums", tone)}>
+              {up ? <Triangle className="size-2.5 fill-current" /> : down ? <Triangle className="size-2.5 rotate-180 fill-current" /> : <Minus className="size-3" />}
+              {Math.abs(p.delta_pct).toFixed(1)}%
+            </span>
+            <span className="mt-1 text-[11px] leading-none whitespace-nowrap text-neutral-400">vs prev {presetDays[preset]}d</span>
           </span>
         )}
       </div>
 
       {!empty && (
         <>
-          <div className={cn("mt-3 h-7", tone)}>
-            {!gated && <Sparkline points={p.sparkline} drawIn={sample} className="h-7 w-full" />}
+          <div className={cn("mt-2 h-9", tone)}>
+            {!gated && <Sparkline points={p.sparkline} drawIn={sample} className="h-9 w-full" />}
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-neutral-400">
+          {/* One muted line; on hover or focus the chart/rows links fade in over its right side.
+              Devices without hover keep the links visible, in the flow under the line. */}
+          <div className="relative mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-neutral-400">
             <span>{window}</span>
             <span aria-hidden>·</span>
             {cached ? (
@@ -135,15 +138,20 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
             ) : (
               <span>as of {timeUtc(asOf)}</span>
             )}
-          </div>
-
-          <div className="mt-3 flex gap-1 border-t border-neutral-100 pt-2">
-            <Button variant="ghost" size="sm" className="-ml-2 text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenChart(); }}>
-              Open chart <ArrowRight />
-            </Button>
-            <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenRows(); }}>
-              View rows <ArrowRight />
-            </Button>
+            <span
+              className={cn(
+                "flex gap-3 bg-white pl-3 text-xs font-medium transition-opacity duration-150",
+                "absolute right-0 bottom-0 opacity-0 group-focus-within/metric:opacity-100 group-hover/metric:opacity-100",
+                "[@media(hover:none)]:static [@media(hover:none)]:basis-full [@media(hover:none)]:pl-0 [@media(hover:none)]:opacity-100",
+              )}
+            >
+              <button className="flex items-center gap-0.5 text-indigo-600 hover:underline" onClick={(e) => { stop(e); onOpenChart(); }}>
+                Open chart <ArrowRight className="size-3" />
+              </button>
+              <button className="flex items-center gap-0.5 text-indigo-600 hover:underline" onClick={(e) => { stop(e); onOpenRows(); }}>
+                View rows <ArrowRight className="size-3" />
+              </button>
+            </span>
           </div>
         </>
       )}

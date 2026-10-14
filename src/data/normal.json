@@ -1330,33 +1330,43 @@
   "active_subs_excl": 388,
   "what_changed": [
     {
+      "card_id": "mrr",
+      "direction": "up",
+      "text": "Up 6.1%, 31 new annual subs",
       "kind": "business",
-      "icon": "up",
-      "text": "MRR up 6.1% vs previous 28 days, driven by 31 new annual subscriptions.",
-      "link": {
-        "label": "Open MRR chart",
-        "metric": "MRR",
-        "action": "chart"
+      "action": {
+        "label": "Open chart",
+        "type": "chart"
       }
     },
     {
+      "card_id": "active_subscriptions",
+      "direction": "flat",
+      "text": "Flat. 12 cancellations, 14 new",
       "kind": "business",
-      "icon": "down",
-      "text": "Trial-to-paid conversion down from 38% to 31% this period.",
-      "link": {
+      "action": {
+        "label": "Open chart",
+        "type": "chart"
+      }
+    },
+    {
+      "card_id": "active_trials",
+      "direction": "down",
+      "text": "Down 10%. Trial-to-paid 38% → 31%",
+      "kind": "business",
+      "action": {
         "label": "Test a new paywall",
-        "metric": "Trial conversion",
-        "action": "experiment"
+        "type": "experiment"
       }
     },
     {
+      "card_id": "revenue",
+      "direction": "info",
+      "text": "Restated 1–6 Oct, v3 definitions",
       "kind": "definition",
-      "icon": "book",
-      "text": "Charts v3 definitions since 6 Oct: refunds now count on refund date. Revenue for 1-6 Oct restated.",
-      "link": {
-        "label": "Read the explainer",
-        "metric": null,
-        "action": "explainer"
+      "action": {
+        "label": "Read explainer",
+        "type": "explainer"
       }
     }
   ],

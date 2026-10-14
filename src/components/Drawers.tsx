@@ -50,12 +50,10 @@ function reply(q: string): Message {
 }
 
 export function RicoDrawer({
-  open, onOpenChange, draft, onDraftChange, onOpenChart, onAddCard, ask,
+  open, onOpenChange, draft, onDraftChange, onOpenChart, onAddCard,
 }: {
   open: boolean; onOpenChange: (o: boolean) => void; draft: string; onDraftChange: (v: string) => void;
   onOpenChart: (metric: string) => void; onAddCard: (id: OptionalCardId) => void;
-  /** A question sent from elsewhere on the page ("Ask Rico why"); `n` changes on every ask. */
-  ask?: { text: string; n: number } | null;
 }) {
   const [messages, setMessages] = useState<Message[]>([
     { from: "rico", text: "Hi, I'm Rico. Ask me about the numbers on this page, what changed, or your business." },
@@ -77,11 +75,6 @@ export function RicoDrawer({
     setTyping(true);
     timers.current.push(window.setTimeout(() => { setMessages((m) => [...m, reply(q)]); setTyping(false); }, 600));
   };
-
-  useEffect(() => {
-    if (ask) send(ask.text);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ask?.n]);
 
   // iMessage: Rico's avatar sits by the last bubble of each of its runs; that bubble gets a tail.
   const lastOfRun = (i: number) => messages[i + 1]?.from !== messages[i].from && !(typing && i === messages.length - 1 && messages[i].from === "rico");

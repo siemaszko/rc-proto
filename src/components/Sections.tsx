@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ArrowRight, BookOpen, ChevronDown, ChevronRight, CircleCheck, Circle, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowDown, ArrowRight, ArrowUp, BookOpen, ChevronDown, ChevronRight, CircleCheck, Circle, Minus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RicoAvatar } from "@/components/Rico";
 import { cn } from "@/lib/utils";
@@ -15,62 +15,79 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-sm font-medium text-neutral-700">{children}</h2>;
 }
 
-const ICONS = { up: TrendingUp, down: TrendingDown, book: BookOpen } as const;
 
-type ChangeItem = Overview["what_changed"][number];
+export type ChangeItem = Overview["what_changed"][number];
 
-// Two tiles side by side under the cards; anything past two waits behind "N more".
-// Each tile: tag, sentence, and bottom-right the action plus "Ask Rico why".
+const DIRECTION = {
+  up: { Icon: ArrowUp, tone: "text-emerald-600" },
+  down: { Icon: ArrowDown, tone: "text-rose-600" },
+  flat: { Icon: Minus, tone: "text-neutral-500" },
+  info: { Icon: BookOpen, tone: "text-neutral-500" },
+} as const;
+
+const tile = "rounded-[12px] border border-neutral-200 bg-white p-3";
+
+// One row of four compact tiles under the four default cards, one per card, in the same grid
+// (the caller adds the (+) spacer so the columns line up). Icon + tag, a sentence of at most
+// two lines, then the action link and Rico as the "Ask Rico why" button.
 export function WhatChanged({
-  data, onAction, onAskRico,
-}: { data: Overview; onAction: (item: ChangeItem) => void; onAskRico: (item: ChangeItem) => void }) {
-  const [expanded, setExpanded] = useState(false);
+  data, cardIds, labelFor, onAction, onAskRico,
+}: {
+  data: Overview;
+  cardIds: string[];
+  labelFor: (cardId: string) => string;
+  onAction: (item: ChangeItem) => void;
+  onAskRico: (item: ChangeItem) => void;
+}) {
   if (data.state === "new_project") return null;
   const gate = data.volume_gate;
   const gated = gate.current < gate.threshold_tx_per_week;
-  const shown = expanded ? data.what_changed : data.what_changed.slice(0, 2);
-  const more = data.what_changed.length - shown.length;
+  const byCard = new Map(data.what_changed.map((w) => [w.card_id, w]));
   return (
     <section className="flex flex-col gap-3" aria-labelledby="what-changed">
-      <SectionTitle><span id="what-changed">What changed</span></SectionTitle>
-      {gated ? (
-        <Card className={cn(panel, "border-dashed bg-transparent p-4")}>
-          <p className="text-sm text-neutral-400">What changed appears at {gate.threshold_tx_per_week}+ transactions a week.</p>
-        </Card>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {shown.map((item) => {
-              const Icon = ICONS[item.icon as keyof typeof ICONS];
-              const business = item.kind === "business";
-              return (
-                <Card key={item.text} className={cn(panel, "gap-3 p-4")}>
-                  <div className="flex items-center justify-between">
-                    <Icon className={cn("size-4", item.icon === "up" ? "text-emerald-600" : item.icon === "down" ? "text-rose-600" : "text-neutral-500")} />
-                    <Badge className={business ? "bg-indigo-50 text-indigo-700" : "bg-neutral-100 text-neutral-700"}>
-                      {business ? "Business" : "Definition / data"}
-                    </Badge>
-                  </div>
-                  <p className="flex-1 text-sm text-neutral-800">{item.text}</p>
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Button variant="ghost" size="sm" className="text-neutral-600" onClick={() => onAskRico(item)}>
-                      <RicoAvatar size={16} /> Ask Rico why
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-indigo-700" onClick={() => onAction(item)}>
-                      {item.link.label} <ArrowRight />
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-          {more > 0 && (
-            <button onClick={() => setExpanded(true)} className="self-start text-sm font-medium text-indigo-600 hover:underline">
-              {more} more
-            </button>
-          )}
-        </>
-      )}
+      <div className="flex items-baseline justify-between gap-3">
+        <SectionTitle><span id="what-changed">What changed</span></SectionTitle>
+        <span className="text-xs text-neutral-400">last 28 full days</span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+        {cardIds.map((id) => {
+          const item = byCard.get(id);
+          if (gated || !item) {
+            return (
+              <div key={id} className={cn(tile, "border-dashed bg-transparent")}>
+                <p className="text-sm text-neutral-400">Appears at {gate.threshold_tx_per_week}+ transactions a week.</p>
+              </div>
+            );
+          }
+          const { Icon, tone } = DIRECTION[item.direction as keyof typeof DIRECTION];
+          const business = item.kind === "business";
+          return (
+            <article key={id} aria-label={`${labelFor(id)}: ${item.text}`} className={cn(tile, "flex flex-col gap-1 transition-colors hover:border-neutral-300")}>
+              <div className="flex items-center justify-between">
+                <Icon className={cn("size-4", tone)} />
+                <span className={cn("rounded-full px-2 py-0.5 text-[11px] leading-none font-medium", business ? "bg-indigo-50 text-indigo-700" : "bg-neutral-100 text-neutral-700")}>
+                  {business ? "Business" : "Definition"}
+                </span>
+              </div>
+              <p className="line-clamp-2 text-sm leading-snug text-neutral-800">{item.text}</p>
+              <div className="mt-auto flex items-center justify-between gap-2">
+                <button onClick={() => onAction(item)} className="flex items-center gap-1 text-[13px] font-medium text-indigo-600 hover:underline">
+                  {item.action.label} <ArrowRight className="size-3.5" />
+                </button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={<button onClick={() => onAskRico(item)} aria-label="Ask Rico why" />}
+                    className="grid size-6 shrink-0 place-items-center rounded-full transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none"
+                  >
+                    <RicoAvatar size={24} />
+                  </TooltipTrigger>
+                  <TooltipContent>Ask Rico why</TooltipContent>
+                </Tooltip>
+              </div>
+            </article>
+          );
+        })}
+      </div>
     </section>
   );
 }

@@ -40,11 +40,11 @@ await shot("03-card-detail.png", {
 });
 await page.keyboard.press("Escape");
 
-// 4. What changed strip + chart modal with "as of" carried over
+// 4. What changed tiles + chart modal with "as of" carried over
 const strip = page.getByRole("region", { name: "What changed" });
 await strip.scrollIntoViewIfNeeded();
 await page.mouse.wheel(0, -260);
-await strip.getByRole("button", { name: "Open MRR chart" }).click();
+await strip.getByRole("article", { name: /^MRR:/ }).getByRole("button", { name: /Open chart/ }).click();
 await page.getByRole("dialog").waitFor();
 await page.waitForTimeout(250);
 await shot("04-what-changed-and-modal.png");
@@ -75,7 +75,7 @@ await page.getByRole("button", { name: "Remove Churn", exact: true }).click();
 check((await cardCount()) === 5, "extra card removed");
 await page.getByRole("button", { name: "Remove Trial conversion", exact: true }).click();
 
-// 9. What changed: two tiles, "1 more", Ask Rico why.
+// 9. What changed: four tiles, each under its card; action links; Rico as "Ask Rico why".
 const tiles = page.getByRole("region", { name: "What changed" });
 await tiles.scrollIntoViewIfNeeded();
 await page.waitForTimeout(150);
@@ -83,9 +83,17 @@ await page.waitForTimeout(150);
   const t = await tiles.boundingBox();
   await shot("09-what-changed-tiles.png", { clip: { x: t.x - 16, y: t.y - 16, width: t.width + 32, height: t.height + 32 } });
 }
-check((await tiles.locator("[data-slot=card]").count()) === 2, "two tiles before 1 more");
-await tiles.getByRole("button", { name: "1 more" }).click();
-check((await tiles.locator("[data-slot=card]").count()) === 3, "three tiles after 1 more");
+check((await tiles.getByRole("article").count()) === 4, "four tiles");
+{
+  // Each tile shares its card's column at 1280px.
+  const cards = page.getByRole("region", { name: "Key numbers" }).locator("[data-slot=card]");
+  for (let i = 0; i < 4; i++) {
+    const c = await cards.nth(i).boundingBox(), t = await tiles.getByRole("article").nth(i).boundingBox();
+    check(Math.abs(c.x - t.x) < 1 && Math.abs(c.width - t.width) < 1, `tile ${i + 1} aligned with card ${i + 1} (card ${Math.round(c.x)}/${Math.round(c.width)}, tile ${Math.round(t.x)}/${Math.round(t.width)})`);
+  }
+  const h = await cards.first().boundingBox();
+  console.log(`card height at 1280px: ${Math.round(h.height)}px`);
+}
 await tiles.getByRole("button", { name: /Test a new paywall/ }).click();
 await page.getByText("Would open Experiments with this segment pre-selected").waitFor();
 await page.keyboard.press("Escape");
@@ -93,9 +101,11 @@ await page.waitForTimeout(300);
 await tiles.getByRole("button", { name: "Ask Rico why" }).first().click();
 {
   const d = page.locator("[data-slot=sheet-content]");
-  await d.getByText("MRR up 6.1% vs previous 28 days").waitFor();
-  await d.getByText("31 new annual subscriptions drove most of it").waitFor();
   const msg = d.getByRole("textbox", { name: "Message Rico" });
+  await msg.waitFor();
+  check((await msg.inputValue()) === "MRR: Up 6.1%, 31 new annual subs", "Ask Rico why pre-fills the sentence");
+  await msg.press("Enter");
+  await d.getByText("31 new annual subscriptions drove most of it").waitFor();
   await msg.fill("Where did new customers go?");
   await msg.press("Enter");
   await d.getByText("Those cards moved off the defaults").waitFor();
@@ -139,7 +149,7 @@ await page.keyboard.press("Escape");
 
 // Exercise the other states and dialogs for console errors.
 await setState("Below volume gate");
-await page.getByText("What changed appears at 10+ transactions a week.").waitFor();
+check((await page.getByText("Appears at 10+ transactions a week.").count()) === 4, "four muted tiles below the volume gate");
 await shot("state-below-volume-gate.png", { fullPage: true });
 await setState("New project");
 check((await page.getByText("No data yet").count()) === 4, "4 empty cards in New project");

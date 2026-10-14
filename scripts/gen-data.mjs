@@ -186,11 +186,13 @@ const normal = file("normal", scenario(42, {
   newCustomers: { mean: 41, trend: 0.2, noise: 0.5, weekly: 0.15 },
   churned: { mean: 1.6, trend: 0, noise: 0.8, weekly: 0 },
 }), { conversion: [31, 38, 3], churn: [4.2, 3.9, 0.6], ltv: [38, 36, 2] }, [412, 388], {
-  // link.action: "chart" opens the chart modal for link.metric, "experiment" and "explainer" open stubs.
+  // One item per default card, in card order. action.type: "chart" opens the chart modal for
+  // that card, "experiment" and "explainer" open stubs. Text stays under 60 characters.
   what_changed: [
-    { kind: "business", icon: "up", text: "MRR up 6.1% vs previous 28 days, driven by 31 new annual subscriptions.", link: { label: "Open MRR chart", metric: "MRR", action: "chart" } },
-    { kind: "business", icon: "down", text: "Trial-to-paid conversion down from 38% to 31% this period.", link: { label: "Test a new paywall", metric: "Trial conversion", action: "experiment" } },
-    { kind: "definition", icon: "book", text: "Charts v3 definitions since 6 Oct: refunds now count on refund date. Revenue for 1-6 Oct restated.", link: { label: "Read the explainer", metric: null, action: "explainer" } },
+    { card_id: "mrr", direction: "up", text: "Up 6.1%, 31 new annual subs", kind: "business", action: { label: "Open chart", type: "chart" } },
+    { card_id: "active_subscriptions", direction: "flat", text: "Flat. 12 cancellations, 14 new", kind: "business", action: { label: "Open chart", type: "chart" } },
+    { card_id: "active_trials", direction: "down", text: "Down 10%. Trial-to-paid 38% → 31%", kind: "business", action: { label: "Test a new paywall", type: "experiment" } },
+    { card_id: "revenue", direction: "info", text: "Restated 1–6 Oct, v3 definitions", kind: "definition", action: { label: "Read explainer", type: "explainer" } },
   ],
   volume_gate: { threshold_tx_per_week: 10, current: 84 },
   recent_transactions: transactions(42, 10, PRODUCTS),

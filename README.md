@@ -28,8 +28,10 @@ Push to `main` deploys to Netlify.
   phone), each carrying its own window ("In total, now" / "Last 28 full days · through
   13 Oct"). **(+)** at the row's end (a dashed "Add a card" row on a phone) adds up to two of
   New customers, Active customers, Trial conversion, Churn, Realized LTV, each removable,
-  in memory only. **What changed** as two tiles (tag, sentence, "Ask Rico why" and the
-  action), the rest behind "1 more"; below the volume gate one muted tile. Recent
+  in memory only. **What changed** (round 8): one row of four compact tiles in the same
+  columns as the four cards, each under its card (icon + tag, a sentence of at most two
+  lines, the action link, and a 24px Rico button that pre-fills the chat with the sentence);
+  below the volume gate four muted tiles. Recent
   transactions (collapsed); footer with the 3 design rules and "Not on this page, and why".
 - **Rico mascot** (round 5): an indigo blob whose eyes are holes in the body, drawn with the
   [bloub](https://github.com/jeremy-prt/bloub) engine (MIT, vendored in `src/vendor/bloub`,
@@ -45,7 +47,7 @@ Push to `main` deploys to Netlify.
   bubble, and a mocked chat: replies after 600ms, keyed on "new/active customers" (offers
   "Add card", same logic as (+)), "mrr", "trial", "right/correct/trust", else a default. MRR
   and trial replies have a button to the chart modal. "Ask Rico why" on a What changed tile
-  opens the chat with the tile's sentence as your message.
+  pre-fills the chat input with "<card>: <sentence>" (round 8; it used to send it).
 - **New project**, two separate designs with separate data and state:
   - **Today** (round 7): RevenueCat's real onboarding block from `onboarding` in
     new_project.json: progress ring, "Let's get you ready… (2 of 6)", "Mark all as done",
@@ -58,10 +60,11 @@ Push to `main` deploys to Netlify.
     SDK step, "Open <flow>" (toast stub) and a "Mark done" checkbox that updates the list.
     The 4 cards stay empty ("—", "No data yet") until "Show sample data" is on; then they fill
     with watermarked sample values and the sparklines draw in (600ms, ease-out).
-- **Card**: label, (i) definition popover (Active subscriptions adds incl./excl. cancelled
-  counts), big number, delta vs previous period (Churn going up is red),
-  28-point sparkline in the delta color, window and freshness line, Open chart / View rows.
-  Clicking anywhere on the card opens the chart.
+- **Card** (round 8, lighter): label and (i) definition popover (Active subscriptions adds
+  incl./excl. cancelled counts); big number with a delta chip on the right ("▲ 5.9%", "vs
+  prev 28d" under it; Churn going up is red); a 36px sparkline; one muted window and
+  freshness line. "Open chart / View rows" fade in on hover or focus (always shown on touch
+  devices). Clicking anywhere on the card opens the chart.
 - **Today**: the "before": Rico bar, 6 plain cards, recent transactions table (unchanged;
   New and Active customers come from `optional_cards` there). New project adds the
   onboarding block on top and shows every card at 0.
@@ -110,6 +113,11 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **New project Now row**: "Show sample data" switch sits left of "Data as of".
 - **Below volume gate**: deltas and sparklines hidden with "Not enough data yet".
 - **Default Rico reply** now says "the numbers on this page" instead of "the six numbers".
+- **Card height** is ~177px at 1280px, not the ~150px target: in a quarter-width card
+  Revenue's line ("Last 28 full days · through 13 Oct · as of 19:42 UTC") needs two lines,
+  and the row keeps one height. With a one-line window the cards come to ~157px.
+- **What changed tiles** carry a `card_id`; the row is laid out with an empty 32px slot where
+  (+) sits above, so each tile shares its card's column exactly.
 - **"Card swapping / custom layout"** stays in "Not on this page": (+) adds from a fixed list
   of five, it doesn't rearrange or swap the defaults.
 - **Screenshot numbering** follows the briefs: 08 (+) picker, 09 What changed tiles, 10 Today

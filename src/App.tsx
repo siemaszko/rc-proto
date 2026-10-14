@@ -43,7 +43,6 @@ export default function App() {
   const [explainerOpen, setExplainerOpen] = useState(false);
   const [experimentOpen, setExperimentOpen] = useState(false);
   const [extra, setExtra] = useState<OptionalCardId[]>([]);
-  const [ricoAsk, setRicoAsk] = useState<{ text: string; n: number } | null>(null);
   const [ricoOpen, setRicoOpen] = useState(false);
   const [ricoDraft, setRicoDraft] = useState("");
   const [showSample, setShowSample] = useState(false);
@@ -90,8 +89,10 @@ export default function App() {
     if (extra.length >= MAX_EXTRA) return toast(`Up to ${MAX_EXTRA} extra cards`);
     setExtra([...extra, id]);
   };
+  const labelFor = (id: string) => allCards.find((c) => c.id === id)?.label ?? id;
+  // "Ask Rico why" pre-fills the chat input with the tile's sentence; the user sends it.
   const askRico = (text: string) => {
-    setRicoAsk((a) => ({ text, n: (a?.n ?? 0) + 1 }));
+    setRicoDraft(text);
     setRicoOpen(true);
   };
 
@@ -193,15 +194,23 @@ export default function App() {
                   <AddCard variant="row" added={extra} onAdd={addCard} className="md:hidden" />
                 </section>
 
-                <WhatChanged
-                  data={data}
-                  onAction={(item) => {
-                    if (item.link.action === "experiment") return setExperimentOpen(true);
-                    if (item.link.action === "explainer" || !item.link.metric) return setExplainerOpen(true);
-                    openMetric(item.link.metric);
-                  }}
-                  onAskRico={(item) => askRico(item.text)}
-                />
+                {/* Same columns as the cards: an empty 32px slot stands in for (+) so tiles sit under their cards. */}
+                <div className="flex gap-3">
+                  <div className="min-w-0 flex-1">
+                    <WhatChanged
+                      data={data}
+                      cardIds={data.cards.map((c) => c.id)}
+                      labelFor={labelFor}
+                      onAction={(item) => {
+                        if (item.action.type === "experiment") return setExperimentOpen(true);
+                        if (item.action.type === "explainer") return setExplainerOpen(true);
+                        openMetric(labelFor(item.card_id));
+                      }}
+                      onAskRico={(item) => askRico(`${labelFor(item.card_id)}: ${item.text}`)}
+                    />
+                  </div>
+                  <div aria-hidden className="hidden w-8 shrink-0 md:block" />
+                </div>
 
                 <RecentTransactions rows={data.recent_transactions} collapsible />
                 <DesignRules onNotOnPage={() => setNotOnPageOpen(true)} />
@@ -245,7 +254,6 @@ export default function App() {
         onDraftChange={setRicoDraft}
         onOpenChart={(metric) => { setRicoOpen(false); openMetric(metric); }}
         onAddCard={(id) => { setRicoOpen(false); addCard(id); }}
-        ask={ricoAsk}
       />
       <SetupDrawer
         step={setupSteps[setupIndex]}
