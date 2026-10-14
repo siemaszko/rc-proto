@@ -48,7 +48,7 @@ function flowSeries(rand, { mean, trend, noise, weekly }) {
 
 const sum = (a) => a.reduce((s, x) => s + x, 0);
 const pct = (now, prev) => (prev ? Math.round(((now - prev) / prev) * 1000) / 10 : 0);
-const downsample = (a, n = 30) => (a.length <= n ? a : Array.from({ length: n }, (_, i) => a[Math.round((i * (a.length - 1)) / (n - 1))]));
+const downsample = (a, n = 28) => (a.length <= n ? a : Array.from({ length: n }, (_, i) => a[Math.round((i * (a.length - 1)) / (n - 1))]));
 
 function periodRange(n) {
   return { start: day(DAYS - n), end: day(DAYS - 1) };
@@ -84,13 +84,17 @@ function buildCards(s, rates) {
   const realtime = { kind: "realtime", computed_at: AS_OF };
   const cached = { kind: "cached", computed_at: CACHED_AT };
 
+  // Every period carries the previous period too: `prev_value` (the level at the period's start
+  // for now-cards, the previous total for period cards) and `sparkline_prev`, both cut from the
+  // same series, so the chart's dashed line always agrees with the card's delta.
   const now = (series) => Object.fromEntries(Object.entries(PRESETS).map(([k, n]) => {
-    const w = series.slice(DAYS - n - 1);
-    return [k, { value: w.at(-1), delta_pct: pct(w.at(-1), w[0]), sparkline: downsample(w.slice(1)) }];
+    const w = series.slice(DAYS - n - 1), pw = series.slice(DAYS - 2 * n - 1, DAYS - n);
+    return [k, { value: w.at(-1), delta_pct: pct(w.at(-1), w[0]), prev_value: w[0], sparkline: downsample(w.slice(1)), sparkline_prev: downsample(pw.slice(1)) }];
   }));
   const flow = (series) => Object.fromEntries(Object.entries(PRESETS).map(([k, n]) => {
     const cur = series.slice(DAYS - n), prev = series.slice(DAYS - 2 * n, DAYS - n);
-    return [k, { value: Math.round(sum(cur) * 100) / 100, delta_pct: pct(sum(cur), sum(prev)), sparkline: downsample(cur) }];
+    const round = (x) => Math.round(x * 100) / 100;
+    return [k, { value: round(sum(cur)), delta_pct: pct(sum(cur), sum(prev)), prev_value: round(sum(prev)), sparkline: downsample(cur), sparkline_prev: downsample(prev) }];
   }));
   // Active customers in a window ≈ active at the end + those who churned during it.
   const activeCustomers = Object.fromEntries(Object.entries(PRESETS).map(([k, n]) => {
@@ -98,7 +102,8 @@ function buildCards(s, rates) {
     const val = (from, to) => at(to) + Math.round(sum(s.churned.slice(from + 1, to + 1)));
     const cur = val(DAYS - n - 1, DAYS - 1), prev = val(DAYS - 2 * n - 1, DAYS - n - 1);
     const spark = s.subs.slice(DAYS - n).map((_, j) => at(DAYS - n + j));
-    return [k, { value: cur, delta_pct: pct(cur, prev), sparkline: downsample(spark) }];
+    const sparkPrev = s.subs.slice(DAYS - 2 * n, DAYS - n).map((_, j) => at(DAYS - 2 * n + j));
+    return [k, { value: cur, delta_pct: pct(cur, prev), prev_value: prev, sparkline: downsample(spark), sparkline_prev: downsample(sparkPrev) }];
   }));
 
   // A rate per preset: its value now, its value one window earlier, and a 30-point walk between.
@@ -106,9 +111,11 @@ function buildCards(s, rates) {
     const r = rng(seed + n);
     const k1 = n / 28, round = (x) => Math.round(x * 10 ** decimals) / 10 ** decimals;
     const now = round(now28 + (r() - 0.5) * spread * (k1 - 1) * 0.5), prev = round(prev28 + (now - now28));
-    const spark = Array.from({ length: 30 }, (_, i) => round(prev + ((now - prev) * i) / 29 + (r() - 0.5) * spread));
-    spark[29] = now;
-    return [k, { value: now, delta_pct: pct(now, prev), sparkline: spark }];
+    const spark = Array.from({ length: 28 }, (_, i) => round(prev + ((now - prev) * i) / 27 + (r() - 0.5) * spread));
+    spark[27] = now;
+    const sparkPrev = Array.from({ length: 28 }, () => round(prev + (r() - 0.5) * spread));
+    sparkPrev[27] = prev;
+    return [k, { value: now, delta_pct: pct(now, prev), prev_value: prev, sparkline: spark, sparkline_prev: sparkPrev }];
   }));
 
   // Revenue's rows are transactions: a count for "See the 1,203 transactions behind this number".

@@ -19,8 +19,9 @@ import { OnboardingBlock } from "@/components/Onboarding";
 import { AddCard, MAX_EXTRA, OPTIONAL_CARDS, type OptionalCardId } from "@/components/AddCard";
 import { RicoDrawer, SetupDrawer } from "@/components/Drawers";
 import { RicoLauncher } from "@/components/Rico";
-import { ChartModal, ExperimentModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
-import { dateTimeUtc, formatValue, fullDaysLabel, periodLabel } from "@/lib/format";
+import { ExperimentModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
+import { ChartModal } from "@/components/ChartModal";
+import { dateTimeUtc, formatValue, fullDaysLabel, presetDays } from "@/lib/format";
 import type { CardData, ChartTarget, Overview, Preset, StateKey, View } from "@/types";
 
 const DATA: Record<StateKey, Overview> = {
@@ -61,13 +62,13 @@ export default function App() {
   const gated = !sample && data.volume_gate.current < data.volume_gate.threshold_tx_per_week;
   const range = data.periods[preset];
   // Now-cards are "in total", but their delta and trend still follow the picker.
-  const ctx = chart && { metric: chart.metric, periodLabel: periodLabel(preset), start: range.start, end: range.end, asOf: data.as_of };
+  const ctx = chart && { metric: chart.metric, periodLabel: `Last ${presetDays[preset]} full days`, start: range.start, end: range.end, asOf: data.as_of };
 
   const empty = sample && !showSample;
   const allCards = [...data.cards, ...Object.values(data.optional_cards)];
   const openMetric = (metric: string) => {
     const card = allCards.find((c) => c.label === metric);
-    setChart({ metric, definition: card?.definition });
+    setChart({ metric, definition: card?.definition, cardId: card?.id });
     setChartOpen(true);
   };
   const openChart = (c: CardData) => { setChart({ metric: c.label, definition: c.definition, cardId: c.id }); setChartOpen(true); };
@@ -243,7 +244,11 @@ export default function App() {
 
       {view === "proposed" && <RicoLauncher onOpen={() => setRicoOpen(true)} />}
 
-      <ChartModal ctx={ctx} definition={chart?.definition} open={chartOpen} onOpenChange={setChartOpen} onViewRows={() => { setChartOpen(false); setRowsOpen(true); }} />
+      <ChartModal
+        ctx={ctx}
+        card={allCards.find((c) => c.id === chart?.cardId) ?? null}
+        preset={preset}
+        open={chartOpen} onOpenChange={setChartOpen} onViewRows={() => { setChartOpen(false); setRowsOpen(true); }} />
       <RowsModal ctx={ctx} open={rowsOpen} onOpenChange={setRowsOpen} />
       <NotOnPageModal open={notOnPageOpen} onOpenChange={setNotOnPageOpen} />
       <ExplainerModal open={explainerOpen} onOpenChange={setExplainerOpen} />

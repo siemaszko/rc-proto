@@ -1,12 +1,11 @@
-import { Clock, Rows3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { dateRange, dateTimeUtc } from "@/lib/format";
 
-type Ctx = { metric: string; periodLabel: string; start: string; end: string; asOf: string };
+export type Ctx = { metric: string; periodLabel: string; start: string; end: string; asOf: string };
 
-function Context({ periodLabel, start, end, asOf }: Ctx) {
+export function Context({ periodLabel, start, end, asOf }: Ctx) {
   return (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-lg bg-neutral-50 p-3 text-sm">
       <dt className="text-neutral-500">Period</dt>
@@ -17,34 +16,6 @@ function Context({ periodLabel, start, end, asOf }: Ctx) {
         <Badge className="bg-indigo-50 text-indigo-700">carried over from Overview</Badge>
       </dd>
     </dl>
-  );
-}
-
-export function ChartModal({
-  ctx, definition, open, onOpenChange, onViewRows,
-}: { ctx: Ctx | null; definition?: string; open: boolean; onOpenChange: (o: boolean) => void; onViewRows: () => void }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        {ctx && (
-          <>
-            <DialogHeader>
-              <DialogTitle>{ctx.metric} · Chart (stub)</DialogTitle>
-              <DialogDescription>{definition ?? "Charts page would open here with the same period and cutoff."}</DialogDescription>
-            </DialogHeader>
-            <Context {...ctx} />
-            <div className="grid h-32 place-items-center rounded-lg border border-dashed border-neutral-300 text-sm text-neutral-400">
-              Chart for {ctx.metric}, {ctx.periodLabel.toLowerCase()}
-            </div>
-            <DialogFooter>
-              <Button onClick={onViewRows} className="bg-indigo-600 text-white hover:bg-indigo-700">
-                <Rows3 /> View rows (200)
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
   );
 }
 

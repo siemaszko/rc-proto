@@ -16,6 +16,7 @@ async function load() {
   await page.goto(TARGET, { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);
 }
+const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
 const shot = (name, opts = {}) => page.screenshot({ path: OUT + name, ...opts });
 
 // 1. Today
@@ -45,12 +46,29 @@ const strip = page.getByRole("region", { name: "What changed" });
 await strip.scrollIntoViewIfNeeded();
 await page.mouse.wheel(0, -260);
 await strip.getByRole("article", { name: /^MRR:/ }).getByRole("button", { name: /Open chart/ }).click();
-await page.getByRole("dialog").waitFor();
-await page.waitForTimeout(250);
-await shot("04-what-changed-and-modal.png");
-await page.keyboard.press("Escape");
+{
+  const dialog = page.getByRole("dialog");
+  const chart = dialog.getByRole("img", { name: /Chart of this period/ });
+  await chart.waitFor();
+  await page.waitForTimeout(250);
+  const c = await chart.boundingBox();
+  await page.mouse.move(c.x + c.width * 0.55, c.y + c.height / 2); // hover: guide + tooltip
+  await dialog.getByText(/ · prev /).waitFor();
+  await shot("04-what-changed-and-modal.png");
+  await dialog.getByRole("button", { name: /Open in Charts/ }).click();
+  await page.getByText("Would open Charts → MRR with this period and cutoff").waitFor();
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+}
+// Every default card opens the drawn chart.
+for (const label of ["MRR", "Active subscriptions", "Active trials", "Revenue"]) {
+  await page.getByRole("button", { name: `${label}, open chart` }).click();
+  await page.getByRole("dialog").getByRole("img", { name: /Chart of this period/ }).waitFor();
+  check((await page.getByRole("dialog").getByRole("heading", { name: label }).count()) === 1, `${label} card opens its chart`);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+}
 
-const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
 const cardCount = () => page.getByRole("region", { name: "Key numbers" }).locator("[data-slot=card]").count();
 check((await cardCount()) === 4, "4 default cards");
 
