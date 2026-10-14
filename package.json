@@ -1,0 +1,15 @@
+{
+  "name": "rc-proto",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "db:migrate": "netlify database migrations apply",
+    "deploy": "netlify deploy",
+    "deploy:prod": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@netlify/database": "^2.0.1"
+  }
+}
