@@ -1,0 +1,143 @@
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Info } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { Sparkline } from "@/components/Sparkline";
+import { cn } from "@/lib/utils";
+import { formatDelta, formatValue, periodLabel, presetDays, timeUtc } from "@/lib/format";
+import type { CardData, Preset } from "@/types";
+
+type Props = {
+  card: CardData;
+  preset: Preset;
+  asOf: string;
+  gated: boolean;
+  sample: boolean;
+  onOpenChart: () => void;
+  onOpenRows: () => void;
+};
+
+const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+
+export function MetricCard({ card, preset, asOf, gated, sample, onOpenChart, onOpenRows }: Props) {
+  const p = card.by_period[preset];
+  const window = card.row === "now" ? card.window : periodLabel(preset);
+  const up = p.delta_pct > 0, down = p.delta_pct < 0;
+  const tone = up ? "text-emerald-600" : down ? "text-rose-600" : "text-neutral-500";
+  const cached = card.freshness.kind === "cached";
+  const caveat = "caveat" in card.freshness ? (card.freshness.caveat as string) : null;
+
+  return (
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={onOpenChart}
+      onKeyDown={(e) => e.key === "Enter" && onOpenChart()}
+      className="relative cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-4 shadow-none ring-0 hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
+    >
+      {sample && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-semibold tracking-widest text-neutral-900/[0.04] uppercase select-none -rotate-12">
+          Sample
+        </span>
+      )}
+
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-medium tracking-wide text-neutral-500 uppercase">{card.label}</span>
+        <div className="flex items-center gap-1.5">
+          {sample && <Badge className="bg-amber-50 text-amber-800 hover:bg-amber-50">Sample</Badge>}
+          <Popover>
+            <PopoverTrigger
+              onClick={stop}
+              aria-label={`What is ${card.label}?`}
+              className="-m-1 rounded p-1 text-neutral-400 hover:text-neutral-700"
+            >
+              <Info className="size-4" />
+            </PopoverTrigger>
+            <PopoverContent side="right" align="start" sideOffset={12} className="w-80 gap-2 p-3" onClick={stop}>
+              <p className="text-sm font-medium text-neutral-900">{card.label}</p>
+              <p className="text-sm text-neutral-700">{card.definition}</p>
+              <p className="text-xs text-neutral-500">Same definition as Charts v3.</p>
+              <Separator />
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-neutral-600">
+                <dt className="text-neutral-400">Window</dt>
+                <dd>{window}</dd>
+                <dt className="text-neutral-400">Data as of</dt>
+                <dd>
+                  {cached ? `Cached, computed ${timeUtc(card.freshness.computed_at)}` : `${timeUtc(asOf)} (page cutoff)`}
+                </dd>
+              </dl>
+              <div className="flex items-center justify-between pt-1">
+                <a href="#" onClick={(e) => e.preventDefault()} className="text-xs font-medium text-indigo-600 hover:underline">
+                  Full definition →
+                </a>
+                <span className="text-[11px] text-neutral-400 italic">Definitions paraphrased</span>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      <div className="mt-2 flex items-baseline justify-between gap-3">
+        <span className="text-[28px] leading-none font-semibold text-neutral-900 tabular-nums">{formatValue(p.value, card.unit)}</span>
+        {gated ? (
+          <span className="text-xs text-neutral-400">Not enough data yet</span>
+        ) : (
+          <span className={cn("flex items-center gap-0.5 text-[13px] font-medium tabular-nums", tone)}>
+            {up ? <ArrowUpRight className="size-3.5" /> : down ? <ArrowDownRight className="size-3.5" /> : null}
+            {formatDelta(p.delta_pct)}
+            <span className="ml-1 font-normal text-neutral-400">vs prev {presetDays[preset]}d</span>
+          </span>
+        )}
+      </div>
+
+      <div className={cn("mt-3 h-7", tone)}>
+        {!gated && <Sparkline points={p.sparkline} className="h-7 w-full" />}
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-neutral-400">
+        <span>{window}</span>
+        <span aria-hidden>·</span>
+        {cached ? (
+          <span className="italic">cached · as of {timeUtc(card.freshness.computed_at)}</span>
+        ) : caveat ? (
+          <Tooltip>
+            <TooltipTrigger render={<span onClick={stop} />} className="cursor-help underline decoration-dotted underline-offset-2">
+              as of {timeUtc(asOf)}
+            </TooltipTrigger>
+            <TooltipContent>{caveat}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <span>as of {timeUtc(asOf)}</span>
+        )}
+      </div>
+
+      <div className="mt-3 flex gap-1 border-t border-neutral-100 pt-2">
+        <Button variant="ghost" size="sm" className="-ml-2 text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenChart(); }}>
+          Open chart <ArrowRight />
+        </Button>
+        <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700" onClick={(e) => { stop(e); onOpenRows(); }}>
+          View rows <ArrowRight />
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+export function PlainCard({ card, onOpenChart }: { card: CardData; onOpenChart: () => void }) {
+  return (
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={onOpenChart}
+      onKeyDown={(e) => e.key === "Enter" && onOpenChart()}
+      className="cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-4 shadow-none ring-0 hover:border-neutral-300"
+    >
+      <span className="text-[13px] font-medium tracking-wide text-neutral-500 uppercase">{card.label}</span>
+      <span className="mt-2 text-[28px] leading-none font-semibold text-neutral-900 tabular-nums">{formatValue(card.value, card.unit)}</span>
+      <span className="mt-2 text-xs text-neutral-400">{card.row === "now" ? "In total" : "Last 28 days"}</span>
+    </Card>
+  );
+}
