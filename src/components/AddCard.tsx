@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 
 // The cards one tap away under (+), in picker order. Keys of `optional_cards` in the JSON.
 export const OPTIONAL_CARDS = [
-  { id: "new_customers", label: "New customers (28d)" },
-  { id: "active_customers", label: "Active customers (28d)" },
-  { id: "trial_conversion", label: "Trial conversion" },
-  { id: "churn", label: "Churn" },
-  { id: "realized_ltv", label: "Realized LTV" },
+  { id: "new_customers", label: "New customers (28d)", hint: "First seen in the period" },
+  { id: "active_customers", label: "Active customers (28d)", hint: "Had an active entitlement in the period" },
+  { id: "trial_conversion", label: "Trial conversion", hint: "Trials that became paid" },
+  { id: "churn", label: "Churn", hint: "Subscriptions that ended" },
+  { id: "realized_ltv", label: "Realized LTV", hint: "Revenue per customer so far" },
 ] as const;
 export type OptionalCardId = (typeof OPTIONAL_CARDS)[number]["id"];
 export const MAX_EXTRA = 2;
@@ -54,12 +54,13 @@ export function AddCard({
               >
                 <span className="flex flex-col">
                   <span className="text-sm text-neutral-900">{c.label}</span>
-                  <span className="text-xs text-neutral-500">Same definition as Charts v3</span>
+                  <span className="text-xs text-neutral-500">{c.hint}</span>
                 </span>
                 {on && <Check className="size-4 text-neutral-500" />}
               </button>
             );
           })}
+          <p className="mx-1 mt-1 border-t border-neutral-100 px-1.5 pt-2 pb-1 text-[11px] text-neutral-400">Same definitions as Charts</p>
         </PopoverContent>
       </Popover>
     </div>

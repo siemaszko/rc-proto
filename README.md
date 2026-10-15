@@ -21,18 +21,23 @@ Push to `main` deploys to Netlify.
 ## What's in it
 
 - **Prototype dock** (dark, floating at the bottom): Today / Proposed tabs and the State
-  select (Normal, Below volume gate, New project). State only swaps the JSON file.
-- **Proposed** (round 9 layout): a 1120px column with 24px sides. Header with app selector,
-  the one "Data as of" cutoff and the 7d / 28d / 90d picker (it drives Revenue and every
-  delta). A line with "+ Add a card" (adds up to two of New customers, Active customers, Trial
-  conversion, Churn, Realized LTV, removable, in memory only; they go to a second row), then
+  select (Normal, Below volume gate, New project). State only swaps the JSON file. Since
+  round 11 an (i) at its right end opens "About this prototype": design rules, "Not on this
+  page, and why" and assumptions A0–A8 (this replaced the page footer and its modal).
+- **Proposed** (round 9 layout): a 1120px column with 24px sides. Header (round 11): "Overview" and the
+  project selector ("CMRA" with an "app" chip; "All projects" disabled, "Next"), then one line
+  "CMRA · as of 15 Oct, 09:14 UTC (i) · here's what changed in the last 28 days" (the phrase
+  follows the picker; 7d before noon local time says "this morning") with the 7d / 28d / 90d
+  picker on the right (it drives Revenue and every delta). A line with "+ Add a card" (adds up to two of New customers, Active customers, Trial
+  conversion, Churn, Realized LTV, each with its own one-liner and a "Same definitions as
+  Charts" footer, removable, in memory only; they go to a second row), then
   one row of four cards: MRR, Active subscriptions, Active trials, Revenue (4 columns, 2x2 on
   a tablet, 1 on a phone). **What changed** (round 10): four tiles in the same grid, each
   under its card, driven by the header's period picker (copy, direction and action per
   7d/28d/90d; subtitle "last N full days"). Each tile: metric label + tag; icon + a sentence
   of at most two lines; the action link, plus a 28px Rico button that pre-fills the chat only
   where the action is "Open chart". Below the volume gate four muted tiles. Recent
-  transactions (collapsed); footer with the 3 design rules and "Not on this page, and why".
+  transactions (collapsed). No page footer since round 11.
 - **Rico mascot** (round 5): an indigo blob whose eyes are holes in the body, drawn with the
   [bloub](https://github.com/jeremy-prt/bloub) engine (MIT, vendored in `src/vendor/bloub`,
   ported from its Vue component to `BloubRico.tsx`). It floats in the bottom-right corner
@@ -64,13 +69,13 @@ Push to `main` deploys to Netlify.
     with watermarked sample values and the sparklines draw in (600ms, ease-out).
 - **Card** (round 9): 200px tall. Label and (i); 36px number with a delta chip on the same
   line ("▲ 5.9%", "vs prev 28d" under it; Churn going up is red); a 64px sparkline with a 6%
-  wash; one muted line ("In total, now · as of 19:42 UTC", Revenue: "Last 28 full days ·
-  through 13 Oct"). No links on the face: the whole card opens the chart, and an arrow fades in
+  wash; one muted line ("In total, now · as of 09:14 UTC", Revenue: "Last 28 full days ·
+  through 14 Oct"). No links on the face: the whole card opens the chart, and an arrow fades in
   top-right on hover (always shown on touch). The (i) is a trust panel: definition, "Same
   definition as Charts v3", incl./excl. cancelled for Active subscriptions, and "See the 412
   subscriptions behind this number →" (opens the rows; trials, MRR and Revenue's 1,203
   transactions get their own wording).
-- **Rows modal** (round 10): "412 subscriptions · as of 14 Oct, 19:42 UTC" and a table of 10
+- **Rows modal** (round 10): "412 subscriptions · as of 15 Oct, 09:14 UTC" and a table of 10
   mock rows (App user ID, Product, Store, Status chip, Started, Expires, Revenue), seeded by
   the card so they never change: subscriptions for Active subscriptions and MRR, trials for
   Active trials, transactions for Revenue. "Showing 10 of 412", "Export CSV" and "Open in
@@ -108,12 +113,17 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
 - **Repo had no framework** (plain HTML + one Netlify Function), so "keep its framework"
   wasn't possible with shadcn. Added Vite + React to the same repo and kept the Netlify
   site, config and functions; `netlify.toml` now builds `dist/`.
-- **Period picker** sits in the header next to "Data as of" (round 6; it was on the period
+- **Live cutoff** (round 11, `src/lib/clock.ts`): at load the as-of is now in UTC rounded
+  down to the minute; cached cards show now minus 1h40 rounded down to the hour; periods are
+  full days ending yesterday. Recent transactions shift by the same amount. Values are the
+  generated mock values, unchanged. The JSON keeps a fixed 14 Oct 19:42 cutoff as its base.
+- **Project name** is "CMRA" (round 11): a RevenueCat project spans platforms, so no "(iOS)".
+- **Period picker** sits on the sub-header line (round 11; before that next to "Data as of", round 6; it was on the period
   row before). It drives Revenue and every card's delta and sparkline ("vs prev
   7d/28d/90d"), since a delta needs a comparison window. Each card carries `by_period` values for 7d/28d/90d;
   top-level fields are the 28d values, matching PRD section 8.
-- **Period dates**: full days ending the day before the cutoff, so 28d is 16 Sep – 13 Oct
-  (as in the PRD). Only the dates moved in round 6; the values are unchanged.
+- **Period dates**: full days ending the day before the cutoff (live since round 11, e.g.
+  16 Sep – 14 Oct on 15 Oct). The values are unchanged.
 - **New project**: sample data is opt-in since round 2 (empty cards by default). Empty
   cards hide the window/freshness line and the chart/rows links too, so they show only
   label, dash and "No data yet". The first incomplete setup task is highlighted.
@@ -127,14 +137,14 @@ Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on **Base UI** primi
   toned down). Delete the loser once one is chosen.
 - **Rico's rest face** is bloub's "attentif" (looks straight out) rather than its default
   "neutre", which looks up and to the side like the x.ai bot; hover switches to "excite".
-- **New project Now row**: "Show sample data" switch sits left of "Data as of".
+- **New project Now row**: "Show sample data" switch sits left of the period picker.
 - **Below volume gate**: deltas and sparklines hidden with "Not enough data yet".
 - **Default Rico reply** now says "the numbers on this page" instead of "the six numbers".
 - **What changed tiles** carry a `card_id` and share the cards' grid (`src/lib/grid.ts`), so
   each tile sits exactly under its card.
 - **Round 9 applies to Proposed only.** Today keeps its 1200px page and plain cards.
 - **No clipboard writes** existed in the app code, so E3 needed no change.
-- **"Card swapping / custom layout"** stays in "Not on this page": (+) adds from a fixed list
+- **"Full custom dashboards"** stays in "Not on this page": (+) adds from a fixed list
   of five, it doesn't rearrange or swap the defaults.
 - **Screenshot numbering** follows the briefs: 08 (+) picker, 09 What changed tiles, 10 Today
   in New project; the Rico mascot and drag shots moved to 12 and 13. 05 is the phone in New

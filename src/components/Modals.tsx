@@ -84,37 +84,6 @@ export function RowsModal({
   );
 }
 
-const NOT_ON_PAGE = [
-  ["New customers / Active customers", "Not daily-decision numbers for most small apps, and the slowest to refresh. One tap away under (+)."],
-  ["Card swapping / custom layout", "Small devs don't configure; strong defaults work. Customization is an escape hatch for later."],
-  ["Health score", "A new number nobody can check. It would add a trust problem, not solve one."],
-  ["AI summary", "Rico already exists. This page's job is the 5-second glance, not a paragraph."],
-  ["Needs-attention widget", "Overlaps with What changed. One capped list is enough."],
-  ["Anomaly alerts", "Subscription numbers are lumpy and there's no baseline yet; it would cry wolf. Simple thresholds first."],
-  ["Per-platform filter", "Most target devs ship 1-3 apps; the app selector covers it. Platform split lives in Charts."],
-];
-
-export function NotOnPageModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Not on this page, and why</DialogTitle>
-          <DialogDescription>Considered and left out on purpose.</DialogDescription>
-        </DialogHeader>
-        <ul className="flex flex-col gap-3">
-          {NOT_ON_PAGE.map(([title, why]) => (
-            <li key={title} className="text-sm">
-              <p className="font-medium text-neutral-900">{title}</p>
-              <p className="text-neutral-600">{why}</p>
-            </li>
-          ))}
-        </ul>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function ExplainerModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

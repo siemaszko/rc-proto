@@ -17,6 +17,16 @@ async function load() {
   await page.evaluate(() => document.fonts.ready);
 }
 const check = (ok, what) => { if (!ok) errors.push(`check failed: ${what}`); };
+// The cutoff is live: "15 Oct, 09:14 UTC", within a couple of minutes of this run.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const LIVE = /(\d{1,2}) (\w{3}), (\d\d):(\d\d) UTC/;
+const isLive = (text) => {
+  const m = text?.match(LIVE);
+  if (!m) return false;
+  const now = new Date(), t = Date.UTC(now.getUTCFullYear(), MONTHS.indexOf(m[2]), +m[1], +m[3], +m[4]);
+  return Math.abs(now - t) < 3 * 60_000;
+};
+const yesterday = (() => { const d = new Date(Date.now() - 86400000); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`; })();
 const shot = (name, opts = {}) => page.screenshot({ path: OUT + name, ...opts });
 
 // 1. Today
@@ -28,6 +38,16 @@ await shot("01-today.png", { fullPage: true });
 await page.getByRole("tab", { name: "Proposed" }).click();
 await page.waitForTimeout(300); // let the tab highlight finish its transition
 await shot("02-proposed-normal.png", { fullPage: true });
+{
+  const sub = page.getByText(/· as of .* UTC/).first();
+  const text = (await sub.locator("..").textContent()) ?? "";
+  check(text.startsWith("CMRA · as of ") && isLive(text), `sub-header shows the live cutoff: ${text}`);
+  check(text.includes("here's what changed in the last 28 days"), "sub-header follows the picker (28d)");
+  check((await page.getByText("Data as of").count()) === 0, "no separate Data as of line");
+  check((await page.locator("footer").count()) === 0, "no page footer");
+  check((await page.title()) === "Overview · CMRA", "browser title");
+  check((await page.getByText(`through ${yesterday}`).count()) >= 1, "periods end yesterday");
+}
 
 // 3. One card with the (i) popover open: Active subscriptions, with incl./excl. lines
 const card = page.locator("[data-slot=card]", { hasText: "Active subscriptions" }).first();
@@ -79,6 +99,8 @@ await plus.click();
 const picker = page.locator("[data-slot=popover-content]");
 await picker.waitFor();
 await page.waitForTimeout(200);
+for (const hint of ["First seen in the period", "Had an active entitlement in the period", "Trials that became paid", "Subscriptions that ended", "Revenue per customer so far", "Same definitions as Charts"])
+  check((await picker.getByText(hint, { exact: true }).count()) === 1, `(+) one-liner: ${hint}`);
 {
   const row = await page.getByRole("region", { name: "Key numbers" }).boundingBox(), pb = await picker.boundingBox();
   const y0 = row.y - 16;
@@ -111,6 +133,8 @@ check((await page.getByText("carried over from Overview").count()) === 0, "no ca
   await page.getByRole("option", { name: "Last 7 days" }).click();
   await tiles.getByText("Up 1.4%, 9 new annual subs").waitFor();
   await tiles.getByText("last 7 full days").waitFor();
+  const phrase = new Date().getHours() < 12 ? "this morning" : "in the last 7 days";
+  await page.getByText(`here's what changed ${phrase}`).waitFor();
   check((await tiles.getByRole("button", { name: "Ask Rico why" }).count()) === 3, "7d: Revenue tile turns to Open chart, with Rico");
   await period.click();
   await page.getByRole("option", { name: "Last 28 days" }).click();
@@ -169,7 +193,7 @@ const msg = drawer.getByRole("textbox", { name: "Message Rico" });
 await drawer.getByRole("button", { name: "Why did MRR go up?" }).click();
 await drawer.getByText("drove most of it").last().waitFor();
 await drawer.getByRole("button", { name: "How is MRR calculated?" }).click();
-await drawer.getByText("Computed at 19:42 UTC today").last().waitFor();
+await drawer.getByText(/Computed at \d\d:\d\d UTC today/).last().waitFor();
 await drawer.getByRole("button", { name: "What should I do next?" }).click();
 await drawer.getByText("That's the biggest lever right now").last().waitFor();
 await page.waitForTimeout(200);
@@ -183,7 +207,9 @@ await drawer.waitFor();
 await drawer.getByRole("button", { name: "View rows" }).last().click();
 {
   const rowsDialog = page.getByRole("dialog", { name: "MRR" });
-  await rowsDialog.getByText("412 subscriptions · as of 14 Oct, 19:42 UTC").waitFor();
+  const head = rowsDialog.getByText(/^412 subscriptions · as of /);
+  await head.waitFor();
+  check(isLive(await head.textContent()), "rows modal shows the live cutoff");
   check((await rowsDialog.locator("tbody tr").count()) === 10, "rows modal shows 10 rows");
   await rowsDialog.getByText("Showing 10 of 412").waitFor();
   await page.waitForTimeout(250);
@@ -246,9 +272,18 @@ await page.waitForTimeout(300);
 }
 await page.getByRole("tab", { name: "Proposed" }).click();
 await setState("Normal");
-await page.getByRole("button", { name: "Not on this page, and why →" }).click();
-await page.getByRole("dialog").waitFor();
-await page.keyboard.press("Escape");
+// About this prototype: (i) at the end of the bar.
+{
+  await page.getByRole("button", { name: "About this prototype" }).click();
+  const about = page.locator("[data-slot=popover-content]");
+  await about.waitFor();
+  for (const h of ["Design rules", "Not on this page, and why", "Assumptions"]) check((await about.getByRole("heading", { name: h }).count()) === 1, `about: ${h}`);
+  check((await about.getByText("Card definitions paraphrased from RC docs.").count()) === 1, "about: A8");
+  await page.waitForTimeout(250);
+  await shot("about-popover.png");
+  await page.keyboard.press("Escape");
+  await about.waitFor({ state: "detached" });
+}
 
 // 13. Drag Rico to another corner: drop spots appear, it snaps to the nearest one.
 {

@@ -182,7 +182,7 @@ function file(state, s, rates, subsSplit, extra) {
     period: { preset: "28d", ...periodRange(28) },
     periods: Object.fromEntries(Object.entries(PRESETS).map(([k, n]) => [k, periodRange(n)])),
     state,
-    app: { id: "app_dayflow", name: "Dayflow", platform: "iOS" },
+    app: { id: "app_cmra", name: "CMRA" },
     ...buildCards(s, rates),
     // Active subscriptions with and without cancelled-but-not-expired, for its (i) popover.
     active_subs_incl: subsSplit[0],

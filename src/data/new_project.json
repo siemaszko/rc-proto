@@ -21,9 +21,8 @@
   },
   "state": "new_project",
   "app": {
-    "id": "app_dayflow",
-    "name": "Dayflow",
-    "platform": "iOS"
+    "id": "app_cmra",
+    "name": "CMRA"
   },
   "cards": [
     {

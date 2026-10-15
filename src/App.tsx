@@ -14,25 +14,31 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sidebar, TopBar } from "@/components/Shell";
 import { MetricCard, PlainCard } from "@/components/MetricCard";
-import { DesignRules, RecentTransactions, RicoBar, SetupChecklist, WhatChanged } from "@/components/Sections";
+import { RecentTransactions, RicoBar, SetupChecklist, WhatChanged } from "@/components/Sections";
 import { OnboardingBlock } from "@/components/Onboarding";
 import { AddCard, MAX_EXTRA, OPTIONAL_CARDS, type OptionalCardId } from "@/components/AddCard";
 import { RicoDrawer, SetupDrawer } from "@/components/Drawers";
 import { RicoLauncher } from "@/components/Rico";
-import { ExperimentModal, ExplainerModal, NotOnPageModal, RowsModal } from "@/components/Modals";
+import { ExperimentModal, ExplainerModal, RowsModal } from "@/components/Modals";
 import type { RowKind } from "@/lib/rows";
 import { ChartModal } from "@/components/ChartModal";
+import { AboutPrototype } from "@/components/About";
+import { live } from "@/lib/clock";
 import { dateTimeUtc, formatValue, fullDaysLabel, presetDays } from "@/lib/format";
 import type { CardData, ChartTarget, Overview, Preset, StateKey, View } from "@/types";
 
 const DATA: Record<StateKey, Overview> = {
-  normal: normalData as Overview,
-  low_volume: lowVolumeData as Overview,
-  new_project: newProjectData as Overview,
+  // Live cutoff and periods, mock values (src/lib/clock.ts).
+  normal: live(normalData as Overview),
+  low_volume: live(lowVolumeData as Overview),
+  new_project: live(newProjectData as Overview),
 };
 
 const STATES = { normal: "Normal", low_volume: "Below volume gate", new_project: "New project" };
 const PRESETS = { "7d": "Last 7 days", "28d": "Last 28 days", "90d": "Last 90 days" };
+// The sub-header's ending: "here's what changed in the last 28 days".
+const changedPhrase = (p: Preset) =>
+  p === "7d" && new Date().getHours() < 12 ? "this morning" : `in the last ${presetDays[p]} days`;
 // The order of today's page: "in total" cards first, then "last 28 days".
 const TODAY_ORDER = ["active_trials", "active_subscriptions", "mrr", "revenue", "new_customers", "active_customers"];
 
@@ -43,7 +49,6 @@ export default function App() {
   const [chart, setChart] = useState<ChartTarget | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
   const [rowsOpen, setRowsOpen] = useState(false);
-  const [notOnPageOpen, setNotOnPageOpen] = useState(false);
   const [explainerOpen, setExplainerOpen] = useState(false);
   const [experimentOpen, setExperimentOpen] = useState(false);
   const [extra, setExtra] = useState<OptionalCardId[]>([]);
@@ -148,16 +153,19 @@ export default function App() {
               view === "today" ? "max-w-[1200px] px-4 md:px-8" : "max-w-[1120px] px-6",
             )}
           >
-            <header className="flex flex-wrap items-center justify-between gap-3">
+            <header className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-xl font-semibold">Overview</h1>
-                <Select items={{ app_dayflow: `${data.app.name} (${data.app.platform})`, all: "All apps" }} defaultValue="app_dayflow">
-                  <SelectTrigger size="sm" className="w-[160px] bg-white"><SelectValue /></SelectTrigger>
+                <Select
+                  items={{ [data.app.id]: <span className="flex items-center gap-1.5">{data.app.name}<span className="rounded bg-neutral-100 px-1.5 py-px text-[11px] text-neutral-500">app</span></span>, all: "All projects" }}
+                  defaultValue={data.app.id}
+                >
+                  <SelectTrigger size="sm" className="w-[140px] bg-white" aria-label="Project"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="app_dayflow">{data.app.name} ({data.app.platform})</SelectItem>
+                    <SelectItem value={data.app.id}>{data.app.name}</SelectItem>
                     <Tooltip>
                       <TooltipTrigger render={<div />}>
-                        <SelectItem value="all" disabled>All apps</SelectItem>
+                        <SelectItem value="all" disabled>All projects</SelectItem>
                       </TooltipTrigger>
                       <TooltipContent side="right">Next</TooltipContent>
                     </Tooltip>
@@ -165,31 +173,35 @@ export default function App() {
                 </Select>
               </div>
               {view === "proposed" && (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  {sample && (
-                    <label className="flex items-center gap-2 text-xs text-neutral-600">
-                      <Switch checked={showSample} onCheckedChange={setShowSample} />
-                      Show sample data
-                    </label>
-                  )}
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-                    Data as of {dateTimeUtc(data.as_of)}
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  {/* One line: whose numbers, how fresh, and over what window. */}
+                  <p className="flex flex-wrap items-center gap-x-1 text-sm text-neutral-500">
+                    <span>{data.app.name} · as of {dateTimeUtc(data.as_of)}</span>
                     <Popover>
                       <PopoverTrigger aria-label="About the data cutoff" className="rounded p-0.5 text-neutral-400 hover:text-neutral-700">
                         <Info className="size-3.5" />
                       </PopoverTrigger>
-                      <PopoverContent align="end" className="w-64 p-3 text-xs text-neutral-700">
+                      <PopoverContent align="start" className="w-64 p-3 text-xs text-neutral-700">
                         All cards on this page use this cutoff. Cached cards show their own time.
                       </PopoverContent>
                     </Popover>
+                    <span>· here&apos;s what changed {changedPhrase(preset)}</span>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    {sample && (
+                      <label className="flex items-center gap-2 text-xs text-neutral-600">
+                        <Switch checked={showSample} onCheckedChange={setShowSample} />
+                        Show sample data
+                      </label>
+                    )}
+                    {/* Drives Revenue and every delta. */}
+                    <Select items={PRESETS} value={preset} onValueChange={(v) => setPreset(v as Preset)}>
+                      <SelectTrigger size="sm" className="w-[140px] bg-white" aria-label="Period"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PRESETS).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  {/* Drives Revenue and every delta. */}
-                  <Select items={PRESETS} value={preset} onValueChange={(v) => setPreset(v as Preset)}>
-                    <SelectTrigger size="sm" className="w-[140px] bg-white" aria-label="Period"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(PRESETS).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
                 </div>
               )}
             </header>
@@ -234,7 +246,6 @@ export default function App() {
                 />
 
                 <RecentTransactions rows={data.recent_transactions} collapsible />
-                <DesignRules onNotOnPage={() => setNotOnPageOpen(true)} />
               </>
             )}
           </main>
@@ -251,7 +262,7 @@ export default function App() {
           </TabsList>
         </Tabs>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-400">State</span>
+          <span className="hidden text-xs text-neutral-400 sm:inline">State</span>
           <Select items={STATES} value={stateKey} onValueChange={(v) => setStateKey(v as StateKey)}>
             <SelectTrigger size="sm" className="w-[150px] sm:w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -259,6 +270,8 @@ export default function App() {
             </SelectContent>
           </Select>
         </div>
+        <span aria-hidden className="h-5 w-px bg-neutral-700" />
+        <AboutPrototype />
       </div>
 
       {view === "proposed" && <RicoLauncher onOpen={() => setRicoOpen(true)} />}
@@ -270,7 +283,6 @@ export default function App() {
         rowsCount={rows.count}
         open={chartOpen} onOpenChange={setChartOpen} onViewRows={() => { setChartOpen(false); setRowsOpen(true); }} />
       <RowsModal ctx={ctx} cardId={chart?.cardId ?? ""} kind={rows.kind} count={rows.count} open={rowsOpen} onOpenChange={setRowsOpen} />
-      <NotOnPageModal open={notOnPageOpen} onOpenChange={setNotOnPageOpen} />
       <ExplainerModal open={explainerOpen} onOpenChange={setExplainerOpen} />
       <ExperimentModal open={experimentOpen} onOpenChange={setExperimentOpen} />
       <RicoDrawer

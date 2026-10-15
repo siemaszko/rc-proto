@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { timeUtc } from "@/lib/format";
+import { NOW } from "@/lib/clock";
 
 // One right-side drawer for Rico and for setup tasks: 420px, full width on a phone.
 export function SideDrawer({
@@ -46,7 +48,7 @@ function reply(q: string): Message {
     return { from: "rico", text: "Those cards moved off the defaults. New customers, last 28 full days: 1,148, up 0.3%. Add it back?", addCard: { label: "Add card", id: "new_customers" } };
   // Before "mrr": "How is MRR calculated?" is about the definition, not the change.
   if (t.includes("calculated") || t.includes("definition"))
-    return { from: "rico", text: "MRR = monthly recurring revenue from active paid subscriptions, normalized to one month, in USD. Same definition as Charts v3. Computed at 19:42 UTC today. Want the 412 subscriptions behind it?", rows: { label: "View rows", metric: "MRR" } };
+    return { from: "rico", text: `MRR = monthly recurring revenue from active paid subscriptions, normalized to one month, in USD. Same definition as Charts v3. Computed at ${timeUtc(NOW)} today. Want the 412 subscriptions behind it?`, rows: { label: "View rows", metric: "MRR" } };
   if (t.includes("do next") || t.includes("should i do"))
     return { from: "rico", text: "Trial-to-paid fell from 38% to 31% this period, mostly on Android. That's the biggest lever right now. Start a paywall test for Android trials?", experiment: { label: "Test a new paywall" } };
   if (t.includes("mrr"))

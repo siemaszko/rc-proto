@@ -214,18 +214,3 @@ export function SetupChecklist({ steps, onOpenStep }: { steps: { label: string; 
     </Card>
   );
 }
-
-export function DesignRules({ onNotOnPage }: { onNotOnPage: () => void }) {
-  return (
-    <footer className="flex flex-col gap-3 border-t border-neutral-200 pt-5 text-xs text-neutral-500 sm:flex-row sm:items-end sm:justify-between">
-      <ol className="flex list-decimal flex-col gap-1 pl-4">
-        <li>You never have to ask if the number is right: definition, window and freshness are on the card.</li>
-        <li>A number without direction is incomplete: every card shows change and trend.</li>
-        <li>Every card leads somewhere: the chart, and when there&apos;s something to do, the action.</li>
-      </ol>
-      <Button variant="link" className="h-auto shrink-0 p-0 text-xs text-indigo-600" onClick={onNotOnPage}>
-        Not on this page, and why →
-      </Button>
-    </footer>
-  );
-}

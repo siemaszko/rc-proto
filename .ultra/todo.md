@@ -54,3 +54,10 @@
 ## Round 10: What changed + rows modal (30 min box)
 - [x] Tiles: metric label, icon by the sentence, period-driven copy, Rico only on Open chart
 - [x] Rows modal with a 10-row mock table; no carried-over chip
+
+## Round 11: notes in the bar, live as-of, header, CMRA (30 min box)
+- [x] About this prototype popover in the bar; page footer and Not-on-page modal removed
+- [x] (+) one-liners and "Same definitions as Charts" footer
+- [x] Live UTC as-of, cached cards, periods ending yesterday
+- [x] Sub-header line following the picker; CMRA rename everywhere
+- [x] Screenshot 02 re-taken and copied; README; deploy
