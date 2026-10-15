@@ -124,6 +124,9 @@ await page.getByRole("button", { name: "Remove Trial conversion", exact: true })
 // 9. What changed: four tiles, each under its card; action links; Rico as "Ask Rico why".
 const tiles = page.getByRole("region", { name: "What changed" });
 await tiles.scrollIntoViewIfNeeded();
+// Two rows of tiles: bring them to the top so the floating bar and Rico stay clear, and let toasts go.
+await page.evaluate(() => window.scrollBy(0, document.querySelector("#what-changed").getBoundingClientRect().top - 60));
+await page.locator("[data-sonner-toast]").first().waitFor({ state: "detached", timeout: 8000 }).catch(() => {});
 await page.waitForTimeout(150);
 {
   const t = await tiles.boundingBox();
@@ -155,6 +158,18 @@ check((await page.getByText("carried over from Overview").count()) === 0, "no ca
   }
   const h = await cards.first().boundingBox();
   console.log(`card height at 1280px: ${Math.round(h.height)}px`);
+}
+// Two columns at every width above a phone: 2 cards and 2 tiles per row, same column widths.
+for (const [w, h] of [[1440, 1000], [1920, 1080], [1280, 900]]) {
+  await page.setViewportSize({ width: w, height: h });
+  await page.waitForTimeout(200);
+  const cards = page.getByRole("region", { name: "Key numbers" }).locator("[data-slot=card]");
+  const cb = await Promise.all([0, 1, 2, 3].map((i) => cards.nth(i).boundingBox()));
+  const tb = await Promise.all([0, 1, 2, 3].map((i) => tiles.getByRole("article").nth(i).boundingBox()));
+  for (const [what, b] of [["cards", cb], ["tiles", tb]])
+    check(Math.abs(b[0].y - b[1].y) < 1 && b[2].y > b[0].y + b[0].height && Math.abs(b[0].x - b[2].x) < 1 && Math.abs(b[0].width - b[1].width) < 1, `${w}px: 2 ${what} per row`);
+  check(cb.every((c, i) => Math.abs(c.x - tb[i].x) < 1 && Math.abs(c.width - tb[i].width) < 1), `${w}px: tiles share the cards' columns`);
+  check(Math.abs(cb[1].x - (cb[0].x + cb[0].width) - 24) < 1, `${w}px: 24px column gap`);
 }
 await tiles.getByRole("button", { name: /Test a new paywall/ }).click();
 await page.getByText("Would open Experiments with this segment pre-selected").waitFor();

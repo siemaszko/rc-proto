@@ -149,8 +149,8 @@ export default function App() {
           <main
             className={cn(
               "mx-auto flex w-full flex-col gap-6 pt-6 pb-24",
-              // Today keeps the page as it is; Proposed gets the 1120px column with 24px sides.
-              view === "today" ? "max-w-[1200px] px-4 md:px-8" : "max-w-[1120px] px-6",
+              // Today keeps the page as it is; Proposed gets the 1320px column with 24px sides.
+              view === "today" ? "max-w-[1200px] px-4 md:px-8" : "max-w-[1320px] px-6",
             )}
           >
             <header className="flex flex-col gap-2">

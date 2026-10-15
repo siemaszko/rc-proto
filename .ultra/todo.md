@@ -68,3 +68,8 @@
 - [x] One period wording on cards and modals; Rico tooltip copy
 - [x] Card order MRR, Revenue, Active subscriptions, Active trials (tiles follow)
 - [x] Screenshots 02 and 04 re-taken and copied; README; deploy
+
+## Round 13: two-column grid (20 min box)
+- [x] 1320px column; cards and tiles in one 2-column grid from 768px, 24px gaps
+- [x] Cards 256px / 24px padding / 40px number / 72px sparkline; tiles 144px, 16px sentence, 32px Rico
+- [x] Checks at 1440x1000 and 1920x1080; screenshots 02 and 09 copied; README; deploy

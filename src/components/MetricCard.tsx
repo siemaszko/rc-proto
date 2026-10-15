@@ -58,7 +58,7 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
       aria-label={`${card.label}, open chart`}
       onClick={onOpenChart}
       onKeyDown={(e) => e.key === "Enter" && onOpenChart()}
-      className="group/metric relative min-h-[200px] cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-5 shadow-none ring-0 transition-colors hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
+      className="group/metric relative min-h-[256px] cursor-pointer gap-0 rounded-[12px] border border-neutral-200 bg-white p-6 shadow-none ring-0 transition-colors hover:border-neutral-300 focus-visible:outline-2 focus-visible:outline-indigo-600"
     >
       {sample && !empty && (
         <span aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-semibold tracking-widest text-neutral-900/[0.04] uppercase select-none -rotate-12">
@@ -104,7 +104,7 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
 
       {/* Number left, delta chip right on the same baseline; "vs prev" under the chip. */}
       <div className="mt-2 flex items-start justify-between gap-2">
-        <span className={cn("text-4xl leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
+        <span className={cn("text-[40px] leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
           {empty ? "-" : formatValue(p.value, card.unit)}
         </span>
         {empty ? (
@@ -124,8 +124,8 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
 
       {!empty && (
         <>
-          <div className={cn("mt-4 h-16", tone)}>
-            {!gated && <Sparkline points={p.sparkline} drawIn={sample} strokeWidth={1.75} area className="h-16 w-full" />}
+          <div className={cn("mt-4 h-[72px]", tone)}>
+            {!gated && <Sparkline points={p.sparkline} drawIn={sample} strokeWidth={1.75} area className="h-[72px] w-full" />}
           </div>
           <p className="mt-auto pt-3 text-xs text-neutral-400">{line}</p>
         </>

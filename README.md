@@ -25,17 +25,17 @@ Push to `main` deploys to Netlify.
   right after "Prototype" (round 12; a divider follows it) opens "About this prototype", a
   centered dark dialog: design rules, "Not on this page, and why" and Author (this replaced
   the page footer and its modal in round 11).
-- **Proposed** (round 9 layout): a 1120px column with 24px sides. Header (round 11): "Overview" and the
+- **Proposed** (round 13 layout): a 1320px column with 24px sides. Header (round 11): "Overview" and the
   project selector ("CMRA" with an "app" chip; "All projects" disabled, "Next"), then one line
   "CMRA · as of 15 Oct, 09:14 UTC (i) · here's what changed in the last 28 days" (the phrase
   follows the picker; 7d before noon local time says "this morning") with the 7d / 28d / 90d
   picker on the right (it drives Revenue and every delta). A line with "+ Add a card" (adds up to two of New customers, Active customers, Trial
   conversion, Churn, Realized LTV, each with its own one-liner, removable, in memory only; they go to a second row), then
-  one row of four cards, money first (round 12): MRR, Revenue, Active subscriptions, Active trials (4 columns, 2x2 on
-  a tablet, 1 on a phone). **What changed** (round 10): four tiles in the same grid, each
+  four cards, money first (round 12): MRR, Revenue, Active subscriptions, Active trials, in a
+  2x2 grid at every width from 768px (round 13; 24px gaps, 1 column on a phone). **What changed** (round 10): four 144px tiles in the same 2-column grid (40px above the title, 16px below), each
   under its card, driven by the header's period picker (copy, direction and action per
   7d/28d/90d; subtitle "last N full days"). Each tile: metric label + tag; icon + a sentence
-  of at most two lines; the action link, plus a 28px Rico button that pre-fills the chat only
+  of at most two lines; the action link, plus a 32px Rico button that pre-fills the chat only
   where the action is "Open chart". Below the volume gate four muted tiles. Recent
   transactions (collapsed). No page footer since round 11.
 - **Rico mascot** (round 5): an indigo blob whose eyes are holes in the body, drawn with the
@@ -67,11 +67,10 @@ Push to `main` deploys to Netlify.
     SDK step, "Open <flow>" (toast stub) and a "Mark done" checkbox that updates the list.
     The 4 cards stay empty ("-", "No data yet") until "Show sample data" is on; then they fill
     with watermarked sample values and the sparklines draw in (600ms, ease-out).
-- **Card** (round 9): 200px tall. Label and (i); 36px number with a delta chip on the same
-  line ("▲ 5.9%", "vs prev 28d" under it; Churn going up is red); a 64px sparkline with a 6%
+- **Card** (round 9, sized up in round 13): 256px tall, 24px padding. Label and (i); 40px number with a delta chip on the same
+  line ("▲ 5.9%", "vs prev 28d" under it; Churn going up is red); a 72px sparkline with a 6%
   wash; one muted line ("In total, now · as of 09:14 UTC", Revenue: "Last 28 full days ·
-  17 Sep – 14 Oct · as of 09:14 UTC", the same period wording as the modals; it wraps to two
-  lines, so cards are 226px at 1280). No links on the face: the whole card opens the chart, and an arrow fades in
+  17 Sep – 14 Oct · as of 09:14 UTC", the same period wording as the modals). No links on the face: the whole card opens the chart, and an arrow fades in
   top-right on hover (always shown on touch). The (i) is a trust panel: definition, "Same
   definition as Charts v3", incl./excl. cancelled for Active subscriptions, and "See the 412
   subscriptions behind this number →" (opens the rows; trials, MRR and Revenue's 1,203
