@@ -166,8 +166,7 @@ export function ChartModal({
                 </dd>
               </div>
             </dl>
-            <div className="flex flex-col-reverse gap-3 border-t border-neutral-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <span className="text-xs text-neutral-400">Same definition as Charts v3</span>
+            <div className="flex justify-end border-t border-neutral-100 pt-4">
               <div className="flex gap-2">
                 <Button variant="outline" onClick={onViewRows}><Rows3 /> View rows ({formatValue(rowsCount, "count")})</Button>
                 <Button className="bg-indigo-600 text-white hover:bg-indigo-700" onClick={() => toast(`Would open Charts → ${ctx.metric} with this period and cutoff`)}>

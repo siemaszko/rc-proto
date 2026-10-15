@@ -25,5 +25,5 @@ export const dateTimeUtc = (iso: string) => `${dayMonth(new Date(iso))}, ${timeU
 export const dateRange = (start: string, end: string) =>
   `${dayMonth(new Date(start + "T00:00:00Z"))} – ${dayMonth(new Date(end + "T00:00:00Z"))}`;
 
-// "Last 28 full days · through 13 Oct"
-export const fullDaysLabel = (p: Preset, end: string) => `Last ${presetDays[p]} full days · through ${dayMonth(new Date(end + "T00:00:00Z"))}`;
+// "Last 28 full days · 17 Sep – 14 Oct": the one period wording, on cards and in modals.
+export const fullDaysLabel = (p: Preset, start: string, end: string) => `Last ${presetDays[p]} full days · ${dateRange(start, end)}`;

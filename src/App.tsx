@@ -127,7 +127,7 @@ export default function App() {
       key={c.id}
       card={c}
       preset={preset}
-      window={c.row === "now" ? c.window : fullDaysLabel(preset, range.end)}
+      window={c.row === "now" ? c.window : fullDaysLabel(preset, range.start, range.end)}
       notes={c.id === "active_subscriptions" ? [
         `Incl. cancelled, not yet expired: ${formatValue(data.active_subs_incl, "count")}`,
         `Excl.: ${formatValue(data.active_subs_excl, "count")}`,
@@ -254,7 +254,11 @@ export default function App() {
 
       {/* Prototype controls: not part of the product UI. A floating dock, dark tokens via .dark. */}
       <div className="dark fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-neutral-100 shadow-lg shadow-neutral-900/20 md:left-[calc(50%+110px)]">
-        <span className="hidden items-center gap-1.5 text-xs font-medium text-neutral-400 sm:flex"><FlaskConical className="size-3.5" /> Prototype</span>
+        <span className="flex items-center gap-1">
+          <span className="hidden items-center gap-1.5 text-xs font-medium text-neutral-400 sm:flex"><FlaskConical className="size-3.5" /> Prototype</span>
+          <AboutPrototype />
+        </span>
+        <span aria-hidden className="h-5 w-px bg-neutral-700" />
         <Tabs value={view} onValueChange={(v) => setView(v as View)}>
           <TabsList className="bg-neutral-900">
             <TabsTrigger value="today" className="dark:data-active:bg-neutral-700">Today</TabsTrigger>
@@ -270,8 +274,6 @@ export default function App() {
             </SelectContent>
           </Select>
         </div>
-        <span aria-hidden className="h-5 w-px bg-neutral-700" />
-        <AboutPrototype />
       </div>
 
       {view === "proposed" && <RicoLauncher onOpen={() => setRicoOpen(true)} />}

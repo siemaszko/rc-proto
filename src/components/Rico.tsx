@@ -191,7 +191,7 @@ export function RicoLauncher({ onOpen }: { onOpen: () => void }) {
               <RicoLive size={size} happy={hover || !!drag} />
             </span>
           </TooltipTrigger>
-          <TooltipContent side={left ? "right" : "left"} sideOffset={bloub ? -6 : 4}>Ask Rico anything about this page</TooltipContent>
+          <TooltipContent side={left ? "right" : "left"} sideOffset={bloub ? -6 : 4}>Ask Rico about your business</TooltipContent>
         </Tooltip>
       </div>
     </>

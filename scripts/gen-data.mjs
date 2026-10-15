@@ -122,12 +122,12 @@ function buildCards(s, rates) {
   // Revenue's rows are transactions: a count for "See the 1,203 transactions behind this number".
   const withTransactions = (byPeriod) => Object.fromEntries(Object.entries(byPeriod).map(([k, v]) => [k, { ...v, transactions: Math.round(v.value / AVG_TX) }]));
 
-  // The four default cards, in the order they show.
+  // The four default cards, in the order they show: money first, then counts.
   const cards = [
     card("mrr", "now", "MRR", "USD", "In total, now", realtime, now(s.mrr)),
+    card("revenue", "period", "Revenue", "USD", fullDays(28), { ...realtime, caveat: "Late refunds may adjust up to 7 days." }, withTransactions(flow(s.revenue))),
     card("active_subscriptions", "now", "Active subscriptions", "count", "In total, now", realtime, now(s.subs)),
     card("active_trials", "now", "Active trials", "count", "In total, now", realtime, now(s.trials)),
-    card("revenue", "period", "Revenue", "USD", fullDays(28), { ...realtime, caveat: "Late refunds may adjust up to 7 days." }, withTransactions(flow(s.revenue))),
   ];
   // Cards one tap away under (+). Same shape as `cards`.
   const optional_cards = {
@@ -206,6 +206,10 @@ const normal = file("normal", scenario(42, {
       text: { "7d": "Up 1.4%, 9 new annual subs", "28d": "Up 6.1%, 31 new annual subs", "90d": "Up 14%, 88 new annual subs" },
       direction: { "7d": "up", "28d": "up", "90d": "up" },
       action: perPreset({ label: "Open chart", type: "chart" }) },
+    { card_id: "revenue", kind: "definition",
+      text: { "7d": "No definition changes this week", "28d": "Restated 1–6 Oct, v3 definitions", "90d": "Restated 1–6 Oct, v3 definitions" },
+      direction: { "7d": "flat", "28d": "info", "90d": "info" },
+      action: { "7d": { label: "Open chart", type: "chart" }, "28d": { label: "Read explainer", type: "explainer" }, "90d": { label: "Read explainer", type: "explainer" } } },
     { card_id: "active_subscriptions", kind: "business",
       text: { "7d": "Flat. 3 cancellations, 4 new", "28d": "Flat. 12 cancellations, 14 new", "90d": "Up 3%. 41 cancellations, 53 new" },
       direction: { "7d": "flat", "28d": "flat", "90d": "up" },
@@ -214,10 +218,6 @@ const normal = file("normal", scenario(42, {
       text: { "7d": "Down 4%. Trial-to-paid 35% → 31%", "28d": "Down 10%. Trial-to-paid 38% → 31%", "90d": "Down 18%. Trial-to-paid 41% → 31%" },
       direction: { "7d": "down", "28d": "down", "90d": "down" },
       action: perPreset({ label: "Test a new paywall", type: "experiment" }) },
-    { card_id: "revenue", kind: "definition",
-      text: { "7d": "No definition changes this week", "28d": "Restated 1–6 Oct, v3 definitions", "90d": "Restated 1–6 Oct, v3 definitions" },
-      direction: { "7d": "flat", "28d": "info", "90d": "info" },
-      action: { "7d": { label: "Open chart", type: "chart" }, "28d": { label: "Read explainer", type: "explainer" }, "90d": { label: "Read explainer", type: "explainer" } } },
   ],
   volume_gate: { threshold_tx_per_week: 10, current: 84 },
   recent_transactions: transactions(42, 10, PRODUCTS),

@@ -21,17 +21,17 @@ Push to `main` deploys to Netlify.
 ## What's in it
 
 - **Prototype dock** (dark, floating at the bottom): Today / Proposed tabs and the State
-  select (Normal, Below volume gate, New project). State only swaps the JSON file. Since
-  round 11 an (i) at its right end opens "About this prototype": design rules, "Not on this
-  page, and why" and assumptions A0–A8 (this replaced the page footer and its modal).
+  select (Normal, Below volume gate, New project). State only swaps the JSON file. An (i)
+  right after "Prototype" (round 12; a divider follows it) opens "About this prototype", a
+  centered dark dialog: design rules, "Not on this page, and why" and Author (this replaced
+  the page footer and its modal in round 11).
 - **Proposed** (round 9 layout): a 1120px column with 24px sides. Header (round 11): "Overview" and the
   project selector ("CMRA" with an "app" chip; "All projects" disabled, "Next"), then one line
   "CMRA · as of 15 Oct, 09:14 UTC (i) · here's what changed in the last 28 days" (the phrase
   follows the picker; 7d before noon local time says "this morning") with the 7d / 28d / 90d
   picker on the right (it drives Revenue and every delta). A line with "+ Add a card" (adds up to two of New customers, Active customers, Trial
-  conversion, Churn, Realized LTV, each with its own one-liner and a "Same definitions as
-  Charts" footer, removable, in memory only; they go to a second row), then
-  one row of four cards: MRR, Active subscriptions, Active trials, Revenue (4 columns, 2x2 on
+  conversion, Churn, Realized LTV, each with its own one-liner, removable, in memory only; they go to a second row), then
+  one row of four cards, money first (round 12): MRR, Revenue, Active subscriptions, Active trials (4 columns, 2x2 on
   a tablet, 1 on a phone). **What changed** (round 10): four tiles in the same grid, each
   under its card, driven by the header's period picker (copy, direction and action per
   7d/28d/90d; subtitle "last N full days"). Each tile: metric label + tag; icon + a sentence
@@ -65,17 +65,18 @@ Push to `main` deploys to Netlify.
   - **Proposed** (round 2): the "Finish setting up your project" checklist from `setup`
     (2 of 6 done); each step opens the task drawer with numbered steps, a code snippet for the
     SDK step, "Open <flow>" (toast stub) and a "Mark done" checkbox that updates the list.
-    The 4 cards stay empty ("—", "No data yet") until "Show sample data" is on; then they fill
+    The 4 cards stay empty ("-", "No data yet") until "Show sample data" is on; then they fill
     with watermarked sample values and the sparklines draw in (600ms, ease-out).
 - **Card** (round 9): 200px tall. Label and (i); 36px number with a delta chip on the same
   line ("▲ 5.9%", "vs prev 28d" under it; Churn going up is red); a 64px sparkline with a 6%
   wash; one muted line ("In total, now · as of 09:14 UTC", Revenue: "Last 28 full days ·
-  through 14 Oct"). No links on the face: the whole card opens the chart, and an arrow fades in
+  17 Sep – 14 Oct · as of 09:14 UTC", the same period wording as the modals; it wraps to two
+  lines, so cards are 226px at 1280). No links on the face: the whole card opens the chart, and an arrow fades in
   top-right on hover (always shown on touch). The (i) is a trust panel: definition, "Same
   definition as Charts v3", incl./excl. cancelled for Active subscriptions, and "See the 412
   subscriptions behind this number →" (opens the rows; trials, MRR and Revenue's 1,203
   transactions get their own wording).
-- **Rows modal** (round 10): "412 subscriptions · as of 15 Oct, 09:14 UTC" and a table of 10
+- **Rows modal** (round 10): "412 subscriptions · Last 28 full days · 17 Sep – 14 Oct · as of 15 Oct, 09:14 UTC" and a table of 10
   mock rows (App user ID, Product, Store, Status chip, Started, Expires, Revenue), seeded by
   the card so they never change: subscriptions for Active subscriptions and MRR, trials for
   Active trials, transactions for Revenue. "Showing 10 of 412", "Export CSV" and "Open in

@@ -10,7 +10,7 @@ import type { CardData, Preset } from "@/types";
 type Props = {
   card: CardData;
   preset: Preset;
-  /** "In total, now" or "Last 28 full days · through 13 Oct" */
+  /** "In total, now" or "Last 28 full days · 17 Sep – 14 Oct" */
   window: string;
   /** Extra lines under the definition in the (i) popover. */
   notes?: string[];
@@ -48,8 +48,8 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
   const tone = good ? "text-emerald-600" : bad ? "text-rose-600" : "text-neutral-500";
   const cached = card.freshness.kind === "cached";
   const caveat = "caveat" in card.freshness ? (card.freshness.caveat as string) : null;
-  // "In total, now · as of 19:42 UTC" for now-cards; period cards carry their dates instead.
-  const line = card.row === "now" ? `${window} · as of ${timeUtc(cached ? card.freshness.computed_at : asOf)}` : window;
+  // "In total, now · as of 06:22 UTC", or "Last 28 full days · 17 Sep – 14 Oct · as of 06:22 UTC".
+  const line = `${window} · as of ${timeUtc(cached ? card.freshness.computed_at : asOf)}`;
 
   return (
     <Card
@@ -105,7 +105,7 @@ export function MetricCard({ card, preset, window, notes, onRemove, asOf, gated,
       {/* Number left, delta chip right on the same baseline; "vs prev" under the chip. */}
       <div className="mt-2 flex items-start justify-between gap-2">
         <span className={cn("text-4xl leading-none font-semibold tabular-nums", empty ? "text-neutral-300" : "text-neutral-900")}>
-          {empty ? "—" : formatValue(p.value, card.unit)}
+          {empty ? "-" : formatValue(p.value, card.unit)}
         </span>
         {empty ? (
           <span className="pt-1.5 text-xs text-neutral-400">No data yet</span>

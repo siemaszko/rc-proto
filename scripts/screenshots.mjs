@@ -46,7 +46,12 @@ await shot("02-proposed-normal.png", { fullPage: true });
   check((await page.getByText("Data as of").count()) === 0, "no separate Data as of line");
   check((await page.locator("footer").count()) === 0, "no page footer");
   check((await page.title()) === "Overview · CMRA", "browser title");
-  check((await page.getByText(`through ${yesterday}`).count()) >= 1, "periods end yesterday");
+  const revenue = (await page.getByRole("button", { name: "Revenue, open chart" }).textContent()) ?? "";
+  check(/Last 28 full days · \d+ \w{3} – (\d+ \w{3}) · as of \d\d:\d\d UTC/.test(revenue) && revenue.includes(`– ${yesterday} ·`), `Revenue footer wording: ${revenue}`);
+  const order = await page.getByRole("region", { name: "Key numbers" }).locator("[data-slot=card]").evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")));
+  check(order.join("|") === "MRR, open chart|Revenue, open chart|Active subscriptions, open chart|Active trials, open chart", `card order: ${order}`);
+  const body = await page.locator("body").innerText();
+  check(!body.includes("\u2014") && !body.includes("(stub)"), "no em-dash or (stub) on the page");
 }
 
 // 3. One card with the (i) popover open: Active subscriptions, with incl./excl. lines
@@ -99,8 +104,9 @@ await plus.click();
 const picker = page.locator("[data-slot=popover-content]");
 await picker.waitFor();
 await page.waitForTimeout(200);
-for (const hint of ["First seen in the period", "Had an active entitlement in the period", "Trials that became paid", "Subscriptions that ended", "Revenue per customer so far", "Same definitions as Charts"])
+for (const hint of ["First seen in the period", "Had an active entitlement in the period", "Trials that became paid", "Subscriptions that ended", "Revenue per customer so far"])
   check((await picker.getByText(hint, { exact: true }).count()) === 1, `(+) one-liner: ${hint}`);
+check((await picker.getByText("Same definitions as Charts").count()) === 0, "(+) has no footer line");
 {
   const row = await page.getByRole("region", { name: "Key numbers" }).boundingBox(), pb = await picker.boundingBox();
   const y0 = row.y - 16;
@@ -182,7 +188,7 @@ await page.evaluate(() => window.scrollTo(0, 0));
 const mascot = page.getByRole("button", { name: "Ask Rico", exact: true });
 await mascot.locator("canvas, svg").first().waitFor();
 await mascot.hover();
-await page.getByText("Ask Rico anything about this page").waitFor();
+await page.getByText("Ask Rico about your business").waitFor();
 await page.waitForTimeout(120);
 const m = await mascot.boundingBox();
 await shot("12-rico-mascot-hover.png", { clip: { x: m.x - 260, y: m.y - 40, width: m.width + 284, height: m.height + 64 } });
@@ -207,7 +213,7 @@ await drawer.waitFor();
 await drawer.getByRole("button", { name: "View rows" }).last().click();
 {
   const rowsDialog = page.getByRole("dialog", { name: "MRR" });
-  const head = rowsDialog.getByText(/^412 subscriptions · as of /);
+  const head = rowsDialog.getByText(/^412 subscriptions · Last 28 full days · \d+ \w{3} – \d+ \w{3} · as of /);
   await head.waitFor();
   check(isLive(await head.textContent()), "rows modal shows the live cutoff");
   check((await rowsDialog.locator("tbody tr").count()) === 10, "rows modal shows 10 rows");
@@ -275,10 +281,14 @@ await setState("Normal");
 // About this prototype: (i) at the end of the bar.
 {
   await page.getByRole("button", { name: "About this prototype" }).click();
-  const about = page.locator("[data-slot=popover-content]");
+  const about = page.getByRole("dialog", { name: "About this prototype" });
   await about.waitFor();
-  for (const h of ["Design rules", "Not on this page, and why", "Assumptions"]) check((await about.getByRole("heading", { name: h }).count()) === 1, `about: ${h}`);
-  check((await about.getByText("Card definitions paraphrased from RC docs.").count()) === 1, "about: A8");
+  for (const h of ["Design rules", "Not on this page, and why", "Author"]) check((await about.getByRole("heading", { name: h }).count()) === 1, `about: ${h}`);
+  check((await about.getByRole("heading", { name: "Assumptions" }).count()) === 0, "about: no Assumptions");
+  check((await about.getByRole("link", { name: "L.Siemaszko@gmail.com" }).getAttribute("href")) === "mailto:L.Siemaszko@gmail.com", "about: mailto");
+  check((await about.getByText("Drag to rearrange cards").count()) === 1, "about: drag line");
+  const text = await about.innerText();
+  check(!text.includes("\u2014"), "about: no em-dash");
   await page.waitForTimeout(250);
   await shot("about-popover.png");
   await page.keyboard.press("Escape");

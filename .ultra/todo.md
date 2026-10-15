@@ -61,3 +61,10 @@
 - [x] Live UTC as-of, cached cards, periods ending yesterday
 - [x] Sub-header line following the picker; CMRA rename everywhere
 - [x] Screenshot 02 re-taken and copied; README; deploy
+
+## Round 12: polish (30 min box)
+- [x] (i) at the left of the bar with a divider, centered About dialog with Author
+- [x] No em-dashes or "(stub)" in the UI; no "Same definition" in (+) footer or chart modal
+- [x] One period wording on cards and modals; Rico tooltip copy
+- [x] Card order MRR, Revenue, Active subscriptions, Active trials (tiles follow)
+- [x] Screenshots 02 and 04 re-taken and copied; README; deploy

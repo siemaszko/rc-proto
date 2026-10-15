@@ -60,7 +60,6 @@ export function AddCard({
               </button>
             );
           })}
-          <p className="mx-1 mt-1 border-t border-neutral-100 px-1.5 pt-2 pb-1 text-[11px] text-neutral-400">Same definitions as Charts</p>
         </PopoverContent>
       </Popover>
     </div>

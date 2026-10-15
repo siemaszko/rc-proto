@@ -39,7 +39,7 @@ export function RowsModal({
             <DialogHeader>
               <DialogTitle className="text-lg">{ctx.metric}</DialogTitle>
               <DialogDescription className="text-neutral-500">
-                {formatValue(count, "count")} {kind} · as of {dateTimeUtc(ctx.asOf)}
+                {formatValue(count, "count")} {kind} · {ctx.periodLabel} · {dateRange(ctx.start, ctx.end)} · as of {dateTimeUtc(ctx.asOf)}
               </DialogDescription>
             </DialogHeader>
             <div className="min-w-0 overflow-x-auto rounded-lg border border-neutral-200">
@@ -89,7 +89,7 @@ export function ExplainerModal({ open, onOpenChange }: { open: boolean; onOpenCh
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Charts v3 definitions (stub)</DialogTitle>
+          <DialogTitle>Charts v3 definitions</DialogTitle>
           <DialogDescription>Since 6 Oct, refunds count on the refund date instead of the original purchase date.</DialogDescription>
         </DialogHeader>
         <p className="text-sm text-neutral-700">
@@ -105,7 +105,7 @@ export function ExperimentModal({ open, onOpenChange }: { open: boolean; onOpenC
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Test a new paywall (stub)</DialogTitle>
+          <DialogTitle>Test a new paywall</DialogTitle>
           <DialogDescription>Would open Experiments with this segment pre-selected.</DialogDescription>
         </DialogHeader>
       </DialogContent>

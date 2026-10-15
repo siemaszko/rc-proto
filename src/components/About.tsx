@@ -1,9 +1,9 @@
 import { Info } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // "About this prototype": the notes that used to sit in the page footer, now behind (i) at
-// the end of the prototype bar. Not part of the product UI.
+// the start of the prototype bar, in a centered dialog. Not part of the product UI.
 
 const RULES = [
   "You never have to ask if the number is right: definition, window and freshness are on the card.",
@@ -12,25 +12,14 @@ const RULES = [
 ];
 
 const NOT_ON_PAGE = [
-  ["Full custom dashboards", "small devs don't configure; strong defaults work."],
-  ["Health score", "a new number nobody can check."],
+  ["Full custom dashboards", "Small devs don't configure; strong defaults work."],
+  ["Health score", "A new number nobody can check."],
   ["AI summary", "Rico already exists; this page is the 5-second glance."],
-  ["Needs-attention widget", "overlaps with What changed."],
-  ["Anomaly alerts", "lumpy numbers, no baseline yet; it would cry wolf."],
-  ["Per-app filter", "most target devs ship 1–3 apps; the selector covers it."],
-  ["New customers / Active customers", "slowest to refresh; one tap away under +."],
-];
-
-const ASSUMPTIONS = [
-  ["A0", "No answers from the recruiter; I picked the segment."],
-  ["A1", "Big customers read RC via API / MCP."],
-  ["A2", "Mobile share unknown."],
-  ["A3", "Test project empty, sparklines unseen with real data."],
-  ["A4", "Only size claim: “more than 1 in 3 new subscription apps”."],
-  ["A5", "Team: 3 of 6 engineers, 1 designer, 10 weeks after v3 settles."],
-  ["A6", "Baseline unknown until week 1."],
-  ["A7", "Idea sizes are my estimates."],
-  ["A8", "Card definitions paraphrased from RC docs."],
+  ["Needs-attention widget", "Overlaps with What changed."],
+  ["Anomaly alerts", "Lumpy numbers, no baseline yet; it would cry wolf."],
+  ["Per-app filter", "Most target devs ship 1–3 apps; the selector covers it."],
+  ["New customers / Active customers", "Slowest to refresh; one tap away under +."],
+  ["Drag to rearrange cards", "Next, together with card swapping. The default order should be right without it."],
 ];
 
 function Heading({ children }: { children: string }) {
@@ -39,22 +28,20 @@ function Heading({ children }: { children: string }) {
 
 export function AboutPrototype() {
   return (
-    <Popover>
+    <Dialog>
       <Tooltip>
         <TooltipTrigger
-          render={<PopoverTrigger render={<button aria-label="About this prototype" />} />}
+          render={<DialogTrigger render={<button aria-label="About this prototype" />} />}
           className="grid size-7 place-items-center rounded-md text-neutral-300 hover:bg-neutral-700 hover:text-white"
         >
           <Info className="size-4" />
         </TooltipTrigger>
         <TooltipContent side="top">About this prototype</TooltipContent>
       </Tooltip>
-      <PopoverContent
-        side="top"
-        align="end"
-        sideOffset={12}
-        className="max-h-[60vh] w-[min(380px,calc(100vw-32px))] gap-4 overflow-y-auto rounded-[12px] bg-neutral-900 p-4 text-[13px] text-white ring-neutral-700"
+      <DialogContent
+        className="max-h-[85vh] gap-5 overflow-y-auto rounded-[12px] bg-neutral-900 p-6 text-[13px] text-white ring-neutral-700 sm:max-w-[480px] [&_[data-slot=dialog-close]]:text-neutral-400 [&_[data-slot=dialog-close]]:hover:bg-neutral-800 [&_[data-slot=dialog-close]]:hover:text-white"
       >
+        <DialogTitle className="sr-only">About this prototype</DialogTitle>
         <section className="flex flex-col gap-2">
           <Heading>Design rules</Heading>
           <ol className="flex flex-col gap-1.5">
@@ -67,19 +54,19 @@ export function AboutPrototype() {
           <Heading>Not on this page, and why</Heading>
           <ul className="flex flex-col gap-1.5">
             {NOT_ON_PAGE.map(([title, why]) => (
-              <li key={title}>{title} <span className="text-neutral-400">— {why}</span></li>
+              <li key={title}>{title}: <span className="text-neutral-400">{why}</span></li>
             ))}
           </ul>
         </section>
         <section className="flex flex-col gap-2">
-          <Heading>Assumptions</Heading>
-          <ul className="flex flex-col gap-1.5">
-            {ASSUMPTIONS.map(([id, text]) => (
-              <li key={id} className="flex gap-2"><span className="w-5 shrink-0 text-neutral-400 tabular-nums">{id}</span>{text}</li>
-            ))}
-          </ul>
+          <Heading>Author</Heading>
+          <p>
+            This prototype was built with Claude Code by Lukasz Siemaszko.{" "}
+            <span className="text-neutral-400">Questions:</span>{" "}
+            <a href="mailto:L.Siemaszko@gmail.com" className="underline underline-offset-2 hover:text-indigo-300">L.Siemaszko@gmail.com</a>
+          </p>
         </section>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
